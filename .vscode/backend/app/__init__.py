@@ -6,6 +6,7 @@ from flask_cors import CORS
 from app.api import (
     create_auth_blueprint,
     create_chatbot_blueprint,
+    create_documentos_admin_blueprint,
     create_tramites_blueprint,
     create_tramite_virtual_blueprint,
     create_validacion_blueprint,
@@ -87,6 +88,10 @@ def create_app() -> Flask:
 
     app.register_blueprint(
         create_validacion_blueprint(validar_documento_uc),
+        url_prefix="/api/v1",
+    )
+    app.register_blueprint(
+        create_documentos_admin_blueprint(validacion_repository),
         url_prefix="/api/v1",
     )
     app.register_blueprint(

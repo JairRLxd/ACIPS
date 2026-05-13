@@ -44,7 +44,11 @@ export function AuthProvider({ children }) {
     const result = await loginWithGoogle()
     if (result.success) {
       const backendData = await syncWithBackend()
-      return { ...result, rol: backendData?.rol || 'ciudadano' }
+      return { 
+        ...result, 
+        rol: backendData?.rol || 'ciudadano',
+        user: result.user 
+      }
     }
     return result
   }
@@ -64,7 +68,14 @@ export function AuthProvider({ children }) {
   const syncWithBackend = async () => {
     try {
       const response = await sincronizarUsuario()
-      if (response.data) {
+      console.log('📥 Respuesta del backend:', response.data)
+      
+      // El backend devuelve { success: true, data: {...} }
+      if (response.data && response.data.data) {
+        setBackendUser(response.data.data)
+        return response.data.data
+      } else if (response.data) {
+        // Fallback por si la estructura es diferente
         setBackendUser(response.data)
         return response.data
       }

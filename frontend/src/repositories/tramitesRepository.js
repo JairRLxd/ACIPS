@@ -33,6 +33,15 @@ export const crearTramiteVirtual = ({ programaId, perfilUsuario, documentos, eva
 export const obtenerMisSolicitudes = () =>
   httpClient.get('/api/v1/tramites-virtuales/mis-solicitudes')
 
+// --- Enviar trámite en línea (Grupo B) ---
+
+export const enviarTramiteOnline = ({ programaId, datosUsuario, documentosValidados }) =>
+  httpClient.post('/api/v1/tramites-virtuales/enviar', {
+    programa_id: programaId,
+    datos_usuario: datosUsuario,
+    documentos_validados: documentosValidados,
+  })
+
 // --- Generación de documentos (Grupo B) ---
 
 export const generarDocumento = (tipoDocumento, datos) =>

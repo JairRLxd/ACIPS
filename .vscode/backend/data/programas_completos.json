@@ -1,0 +1,480 @@
+[
+  {
+    "id": 1,
+    "nombre": "Pension para el Bienestar de las Personas Adultas Mayores",
+    "descripcion": "Apoyo economico para personas de 65 anos o mas. Registro final en modulo Bienestar.",
+    "monto": "$6,000 MXN",
+    "periodicidad": "bimestral",
+    "dependencia": "Secretaria de Bienestar",
+    "url_oficial": "https://www.gob.mx/bienestar",
+    "requisitos_elegibilidad": {
+      "edad_minima": 65,
+      "edad_maxima": null,
+      "tiene_hijos": null,
+      "nivel_ingreso": "sin restriccion",
+      "municipios_rurales": false
+    },
+    "documentos_requeridos": [
+      { "id": 1, "nombre": "INE", "tipo": "ine", "validable_ocr": true },
+      { "id": 2, "nombre": "CURP", "tipo": "curp", "validable_ocr": true },
+      { "id": 3, "nombre": "Acta de nacimiento certificada", "tipo": "acta_certificada", "validable_ocr": true },
+      { "id": 4, "nombre": "Comprobante de domicilio", "tipo": "comprobante_domicilio", "validable_ocr": true }
+    ],
+    "modalidad": "presencial",
+    "permite_envio_virtual": false,
+    "emite_constancia": false,
+    "tags": ["pension", "adultos mayores", "bienestar"],
+    "cobertura": "nacional",
+    "estados": [],
+    "situaciones": ["nuevo"],
+    "grupo": "A"
+  },
+  {
+    "id": 2,
+    "nombre": "Pension Mujeres Bienestar",
+    "descripcion": "Apoyo para mujeres de 60 a 64 anos. Registro presencial en modulo.",
+    "monto": "$3,000 MXN",
+    "periodicidad": "bimestral",
+    "dependencia": "Secretaria de Bienestar",
+    "url_oficial": "https://www.gob.mx/bienestar",
+    "requisitos_elegibilidad": {
+      "edad_minima": 60,
+      "edad_maxima": 64,
+      "tiene_hijos": null,
+      "nivel_ingreso": "sin restriccion",
+      "municipios_rurales": false
+    },
+    "documentos_requeridos": [
+      { "id": 1, "nombre": "INE", "tipo": "ine", "validable_ocr": true },
+      { "id": 2, "nombre": "CURP", "tipo": "curp", "validable_ocr": true },
+      { "id": 3, "nombre": "Acta de nacimiento certificada", "tipo": "acta_certificada", "validable_ocr": true },
+      { "id": 4, "nombre": "Comprobante de domicilio", "tipo": "comprobante_domicilio", "validable_ocr": true }
+    ],
+    "modalidad": "presencial",
+    "permite_envio_virtual": false,
+    "emite_constancia": false,
+    "tags": ["mujeres", "pension", "bienestar"],
+    "cobertura": "nacional",
+    "estados": [],
+    "situaciones": ["nuevo"],
+    "grupo": "A"
+  },
+  {
+    "id": 3,
+    "nombre": "Pension para Personas con Discapacidad",
+    "descripcion": "Apoyo para personas con discapacidad. Requiere certificado y validacion presencial.",
+    "monto": "$3,200 MXN",
+    "periodicidad": "bimestral",
+    "dependencia": "Secretaria de Bienestar",
+    "url_oficial": "https://www.gob.mx/bienestar",
+    "requisitos_elegibilidad": {
+      "edad_minima": null,
+      "edad_maxima": null,
+      "tiene_hijos": null,
+      "nivel_ingreso": "sin restriccion",
+      "municipios_rurales": false,
+      "discapacidad": true
+    },
+    "documentos_requeridos": [
+      { "id": 1, "nombre": "INE", "tipo": "ine", "validable_ocr": true },
+      { "id": 2, "nombre": "CURP", "tipo": "curp", "validable_ocr": true },
+      { "id": 3, "nombre": "Acta de nacimiento certificada", "tipo": "acta_certificada", "validable_ocr": true },
+      { "id": 4, "nombre": "Comprobante de domicilio", "tipo": "comprobante_domicilio", "validable_ocr": true },
+      { "id": 5, "nombre": "Certificado de discapacidad", "tipo": "certificado_discapacidad", "validable_ocr": false }
+    ],
+    "modalidad": "presencial",
+    "permite_envio_virtual": false,
+    "emite_constancia": false,
+    "tags": ["discapacidad", "pension", "bienestar"],
+    "cobertura": "nacional",
+    "estados": [],
+    "situaciones": ["nuevo"],
+    "grupo": "A"
+  },
+  {
+    "id": 4,
+    "nombre": "Jovenes Construyendo el Futuro",
+    "descripcion": "Capacitacion para jovenes de 18 a 29 anos que no estudian ni trabajan.",
+    "monto": "$8,500 MXN",
+    "periodicidad": "mensual",
+    "dependencia": "Secretaria del Trabajo y Prevision Social",
+    "url_oficial": "https://jovenesconstruyendoelfuturo.stps.gob.mx",
+    "requisitos_elegibilidad": {
+      "edad_minima": 18,
+      "edad_maxima": 29,
+      "tiene_hijos": null,
+      "nivel_ingreso": "sin restriccion",
+      "municipios_rurales": false
+    },
+    "documentos_requeridos": [
+      { "id": 1, "nombre": "INE", "tipo": "ine", "validable_ocr": true },
+      { "id": 2, "nombre": "CURP", "tipo": "curp", "validable_ocr": true },
+      { "id": 3, "nombre": "Comprobante de domicilio", "tipo": "comprobante_domicilio", "validable_ocr": true }
+    ],
+    "modalidad": "en_linea",
+    "permite_envio_virtual": true,
+    "emite_constancia": true,
+    "tags": ["jovenes", "empleo", "capacitacion", "desempleado"],
+    "cobertura": "nacional",
+    "estados": [],
+    "situaciones": ["nuevo"],
+    "grupo": "B",
+    "tipo_documento_generado": "declaracion_joven"
+  },
+  {
+    "id": 5,
+    "nombre": "Beca Rita Cetina Educacion Basica",
+    "descripcion": "Beca para familias con estudiantes de educacion basica.",
+    "monto": "$1,900 MXN",
+    "periodicidad": "bimestral",
+    "dependencia": "SEP / Becas para el Bienestar",
+    "url_oficial": "https://www.gob.mx/becasbenitojuarez",
+    "requisitos_elegibilidad": {
+      "edad_minima": null,
+      "edad_maxima": null,
+      "tiene_hijos": true,
+      "nivel_ingreso": "sin restriccion",
+      "municipios_rurales": false
+    },
+    "documentos_requeridos": [
+      { "id": 1, "nombre": "CURP", "tipo": "curp", "validable_ocr": true },
+      { "id": 2, "nombre": "Acta de nacimiento certificada", "tipo": "acta_certificada", "validable_ocr": true },
+      { "id": 3, "nombre": "INE del tutor", "tipo": "ine", "validable_ocr": true },
+      { "id": 4, "nombre": "Comprobante de domicilio", "tipo": "comprobante_domicilio", "validable_ocr": true },
+      { "id": 5, "nombre": "Comprobante de inscripcion", "tipo": "constancia_estudios", "validable_ocr": true }
+    ],
+    "modalidad": "en_linea",
+    "permite_envio_virtual": true,
+    "emite_constancia": true,
+    "tags": ["beca", "rita cetina", "educacion basica"],
+    "cobertura": "nacional",
+    "estados": [],
+    "situaciones": ["nuevo"],
+    "grupo": "B",
+    "tipo_documento_generado": "solicitud_beca"
+  },
+  {
+    "id": 6,
+    "nombre": "Beca Benito Juarez Educacion Media Superior",
+    "descripcion": "Apoyo para estudiantes de bachillerato o preparatoria publica.",
+    "monto": "$1,900 MXN",
+    "periodicidad": "bimestral",
+    "dependencia": "Coordinacion Nacional de Becas",
+    "url_oficial": "https://www.gob.mx/becasbenitojuarez",
+    "requisitos_elegibilidad": {
+      "edad_minima": null,
+      "edad_maxima": null,
+      "tiene_hijos": null,
+      "nivel_ingreso": "sin restriccion",
+      "municipios_rurales": false
+    },
+    "documentos_requeridos": [
+      { "id": 1, "nombre": "CURP", "tipo": "curp", "validable_ocr": true },
+      { "id": 2, "nombre": "Comprobante escolar", "tipo": "constancia_estudios", "validable_ocr": true },
+      { "id": 3, "nombre": "Identificacion", "tipo": "ine", "validable_ocr": true }
+    ],
+    "modalidad": "en_linea",
+    "permite_envio_virtual": true,
+    "emite_constancia": true,
+    "tags": ["beca", "benito juarez", "media superior", "bachillerato"],
+    "cobertura": "nacional",
+    "estados": [],
+    "situaciones": ["nuevo"],
+    "grupo": "B",
+    "tipo_documento_generado": "solicitud_beca"
+  },
+  {
+    "id": 7,
+    "nombre": "Jovenes Escribiendo el Futuro",
+    "descripcion": "Beca para estudiantes de nivel superior en condiciones prioritarias.",
+    "monto": "$5,800 MXN",
+    "periodicidad": "bimestral",
+    "dependencia": "SEP / Becas para el Bienestar",
+    "url_oficial": "https://subes.becasbenitojuarez.gob.mx",
+    "requisitos_elegibilidad": {
+      "edad_minima": null,
+      "edad_maxima": null,
+      "tiene_hijos": null,
+      "nivel_ingreso": "bajo",
+      "municipios_rurales": false
+    },
+    "documentos_requeridos": [
+      { "id": 1, "nombre": "CURP", "tipo": "curp", "validable_ocr": true },
+      { "id": 2, "nombre": "Ficha escolar o comprobante de inscripcion", "tipo": "constancia_estudios", "validable_ocr": true }
+    ],
+    "modalidad": "en_linea",
+    "permite_envio_virtual": true,
+    "emite_constancia": true,
+    "tags": ["beca", "superior", "universidad", "subes"],
+    "cobertura": "nacional",
+    "estados": [],
+    "situaciones": ["nuevo"],
+    "grupo": "B",
+    "tipo_documento_generado": "solicitud_beca"
+  },
+  {
+    "id": 8,
+    "nombre": "Apoyo para Ninas y Ninos Hijos de Madres Trabajadoras",
+    "descripcion": "Apoyo para familias con hijas o hijos menores y sin seguridad social suficiente.",
+    "monto": "$1,600 MXN",
+    "periodicidad": "bimestral",
+    "dependencia": "Secretaria de Bienestar",
+    "url_oficial": "https://www.gob.mx/bienestar",
+    "requisitos_elegibilidad": {
+      "edad_minima": null,
+      "edad_maxima": null,
+      "tiene_hijos": true,
+      "nivel_ingreso": "bajo",
+      "municipios_rurales": false
+    },
+    "documentos_requeridos": [
+      { "id": 1, "nombre": "INE del tutor", "tipo": "ine", "validable_ocr": true },
+      { "id": 2, "nombre": "CURP tutor", "tipo": "curp", "validable_ocr": true },
+      { "id": 3, "nombre": "Acta de nacimiento del menor", "tipo": "acta_certificada", "validable_ocr": true },
+      { "id": 4, "nombre": "Comprobante de domicilio", "tipo": "comprobante_domicilio", "validable_ocr": true }
+    ],
+    "modalidad": "presencial",
+    "permite_envio_virtual": false,
+    "emite_constancia": false,
+    "tags": ["madres trabajadoras", "familia", "hijos"],
+    "cobertura": "nacional",
+    "estados": [],
+    "situaciones": ["nuevo"],
+    "grupo": "A"
+  },
+  {
+    "id": 9,
+    "nombre": "Sembrando Vida",
+    "descripcion": "Programa para personas adultas en localidades rurales con tierra disponible.",
+    "monto": "$6,250 MXN",
+    "periodicidad": "mensual",
+    "dependencia": "Secretaria de Bienestar",
+    "url_oficial": "https://www.gob.mx/bienestar/acciones-y-programas/sembrando-vida",
+    "requisitos_elegibilidad": {
+      "edad_minima": 18,
+      "edad_maxima": null,
+      "tiene_hijos": null,
+      "nivel_ingreso": "bajo",
+      "municipios_rurales": true
+    },
+    "documentos_requeridos": [
+      { "id": 1, "nombre": "INE", "tipo": "ine", "validable_ocr": true },
+      { "id": 2, "nombre": "CURP", "tipo": "curp", "validable_ocr": true },
+      { "id": 3, "nombre": "Comprobante de domicilio", "tipo": "comprobante_domicilio", "validable_ocr": true },
+      { "id": 4, "nombre": "Documento de posesion o propiedad de tierra", "tipo": "constancia_posesion_tierra", "validable_ocr": false }
+    ],
+    "modalidad": "presencial",
+    "permite_envio_virtual": false,
+    "emite_constancia": false,
+    "tags": ["campo", "rural", "tierra", "sembrando vida"],
+    "cobertura": "nacional",
+    "estados": [],
+    "situaciones": ["nuevo"],
+    "grupo": "A"
+  },
+  {
+    "id": 10,
+    "nombre": "Produccion para el Bienestar",
+    "descripcion": "Apoyo para productores agricolas.",
+    "monto": "$0 MXN",
+    "periodicidad": "ciclo agricola",
+    "dependencia": "Secretaria de Agricultura y Desarrollo Rural",
+    "url_oficial": "https://www.gob.mx/agricultura",
+    "requisitos_elegibilidad": {
+      "edad_minima": 18,
+      "edad_maxima": null,
+      "tiene_hijos": null,
+      "nivel_ingreso": "sin restriccion",
+      "municipios_rurales": true
+    },
+    "documentos_requeridos": [
+      { "id": 1, "nombre": "INE", "tipo": "ine", "validable_ocr": true },
+      { "id": 2, "nombre": "CURP", "tipo": "curp", "validable_ocr": true },
+      { "id": 3, "nombre": "Comprobante de domicilio", "tipo": "comprobante_domicilio", "validable_ocr": true },
+      { "id": 4, "nombre": "Documento de posesion o propiedad de tierra", "tipo": "constancia_posesion_tierra", "validable_ocr": false }
+    ],
+    "modalidad": "presencial",
+    "permite_envio_virtual": false,
+    "emite_constancia": false,
+    "tags": ["produccion", "campo", "agricultura"],
+    "cobertura": "nacional",
+    "estados": [],
+    "situaciones": ["nuevo"],
+    "grupo": "A"
+  },
+  {
+    "id": 11,
+    "nombre": "Fertilizantes para el Bienestar",
+    "descripcion": "Entrega de fertilizante para productores de cultivos prioritarios.",
+    "monto": "$0 MXN",
+    "periodicidad": "ciclo agricola",
+    "dependencia": "Secretaria de Agricultura y Desarrollo Rural",
+    "url_oficial": "https://www.gob.mx/agricultura",
+    "requisitos_elegibilidad": {
+      "edad_minima": 18,
+      "edad_maxima": null,
+      "tiene_hijos": null,
+      "nivel_ingreso": "sin restriccion",
+      "municipios_rurales": true
+    },
+    "documentos_requeridos": [
+      { "id": 1, "nombre": "INE", "tipo": "ine", "validable_ocr": true },
+      { "id": 2, "nombre": "CURP", "tipo": "curp", "validable_ocr": true },
+      { "id": 3, "nombre": "Comprobante de domicilio", "tipo": "comprobante_domicilio", "validable_ocr": true },
+      { "id": 4, "nombre": "Documento de posesion o propiedad de tierra", "tipo": "constancia_posesion_tierra", "validable_ocr": false }
+    ],
+    "modalidad": "presencial",
+    "permite_envio_virtual": false,
+    "emite_constancia": false,
+    "tags": ["fertilizantes", "cader", "sader", "campo"],
+    "cobertura": "nacional",
+    "estados": [],
+    "situaciones": ["nuevo"],
+    "grupo": "A"
+  },
+  {
+    "id": 12,
+    "nombre": "Mejoramiento de Vivienda / Vivienda Social",
+    "descripcion": "Apoyo sujeto a convocatoria para vivienda precaria.",
+    "monto": "$35,000 MXN",
+    "periodicidad": "unico",
+    "dependencia": "SEDATU / CONAVI",
+    "url_oficial": "https://www.gob.mx/conavi",
+    "requisitos_elegibilidad": {
+      "edad_minima": 18,
+      "edad_maxima": null,
+      "tiene_hijos": null,
+      "nivel_ingreso": "bajo",
+      "municipios_rurales": false
+    },
+    "documentos_requeridos": [
+      { "id": 1, "nombre": "INE", "tipo": "ine", "validable_ocr": true },
+      { "id": 2, "nombre": "CURP", "tipo": "curp", "validable_ocr": true },
+      { "id": 3, "nombre": "Comprobante de domicilio", "tipo": "comprobante_domicilio", "validable_ocr": true },
+      { "id": 4, "nombre": "Escritura o posesion", "tipo": "escritura_o_posesion", "validable_ocr": false }
+    ],
+    "modalidad": "presencial",
+    "permite_envio_virtual": false,
+    "emite_constancia": false,
+    "tags": ["vivienda", "casa", "mejoramiento"],
+    "cobertura": "nacional",
+    "estados": [],
+    "situaciones": ["nuevo"],
+    "grupo": "A"
+  },
+  {
+    "id": 13,
+    "nombre": "Regularizacion o actualizacion CURP",
+    "descripcion": "Correccion, actualizacion o tramite de CURP.",
+    "monto": "$0 MXN",
+    "periodicidad": "servicio",
+    "dependencia": "RENAPO / Registro Civil",
+    "url_oficial": "https://www.gob.mx/curp",
+    "requisitos_elegibilidad": {
+      "edad_minima": null,
+      "edad_maxima": null,
+      "tiene_hijos": null,
+      "nivel_ingreso": "sin restriccion",
+      "municipios_rurales": false
+    },
+    "documentos_requeridos": [
+      { "id": 1, "nombre": "Acta de nacimiento certificada", "tipo": "acta_certificada", "validable_ocr": true },
+      { "id": 2, "nombre": "INE", "tipo": "ine", "validable_ocr": true }
+    ],
+    "modalidad": "presencial",
+    "permite_envio_virtual": false,
+    "emite_constancia": false,
+    "tags": ["curp", "renapo", "registro civil"],
+    "cobertura": "nacional",
+    "estados": [],
+    "situaciones": ["nuevo"],
+    "grupo": "A"
+  },
+  {
+    "id": 14,
+    "nombre": "Reposicion INE / Actualizacion de domicilio",
+    "descripcion": "Renovacion, reposicion o cambio de domicilio de INE.",
+    "monto": "$0 MXN",
+    "periodicidad": "servicio",
+    "dependencia": "Instituto Nacional Electoral",
+    "url_oficial": "https://www.ine.mx",
+    "requisitos_elegibilidad": {
+      "edad_minima": 18,
+      "edad_maxima": null,
+      "tiene_hijos": null,
+      "nivel_ingreso": "sin restriccion",
+      "municipios_rurales": false
+    },
+    "documentos_requeridos": [
+      { "id": 1, "nombre": "Acta de nacimiento certificada", "tipo": "acta_certificada", "validable_ocr": true },
+      { "id": 2, "nombre": "CURP", "tipo": "curp", "validable_ocr": true },
+      { "id": 3, "nombre": "Comprobante de domicilio", "tipo": "comprobante_domicilio", "validable_ocr": true }
+    ],
+    "modalidad": "presencial",
+    "permite_envio_virtual": false,
+    "emite_constancia": false,
+    "tags": ["ine", "credencial", "domicilio", "cita"],
+    "cobertura": "nacional",
+    "estados": [],
+    "situaciones": ["nuevo"],
+    "grupo": "A"
+  },
+  {
+    "id": 15,
+    "nombre": "RFC / Constancia de Situacion Fiscal",
+    "descripcion": "Guia para obtener RFC o constancia fiscal.",
+    "monto": "$0 MXN",
+    "periodicidad": "servicio",
+    "dependencia": "SAT",
+    "url_oficial": "https://www.sat.gob.mx",
+    "requisitos_elegibilidad": {
+      "edad_minima": 18,
+      "edad_maxima": null,
+      "tiene_hijos": null,
+      "nivel_ingreso": "sin restriccion",
+      "municipios_rurales": false
+    },
+    "documentos_requeridos": [
+      { "id": 1, "nombre": "CURP", "tipo": "curp", "validable_ocr": true },
+      { "id": 2, "nombre": "INE", "tipo": "ine", "validable_ocr": true },
+      { "id": 3, "nombre": "Comprobante de domicilio", "tipo": "comprobante_domicilio", "validable_ocr": true }
+    ],
+    "modalidad": "en_linea",
+    "permite_envio_virtual": true,
+    "emite_constancia": true,
+    "tags": ["rfc", "sat", "constancia fiscal"],
+    "cobertura": "nacional",
+    "estados": [],
+    "situaciones": ["nuevo"],
+    "grupo": "B",
+    "tipo_documento_generado": "constancia_situacion_fiscal"
+  },
+  {
+    "id": 16,
+    "nombre": "Acta de nacimiento certificada",
+    "descripcion": "Consulta, pago o descarga de acta de nacimiento certificada cuando aplique.",
+    "monto": "$0 MXN",
+    "periodicidad": "servicio",
+    "dependencia": "Registro Civil",
+    "url_oficial": "https://www.gob.mx/ActaNacimiento",
+    "requisitos_elegibilidad": {
+      "edad_minima": null,
+      "edad_maxima": null,
+      "tiene_hijos": null,
+      "nivel_ingreso": "sin restriccion",
+      "municipios_rurales": false
+    },
+    "documentos_requeridos": [
+      { "id": 1, "nombre": "CURP", "tipo": "curp", "validable_ocr": true },
+      { "id": 2, "nombre": "INE", "tipo": "ine", "validable_ocr": true }
+    ],
+    "modalidad": "en_linea",
+    "permite_envio_virtual": true,
+    "emite_constancia": true,
+    "tags": ["acta", "nacimiento", "registro civil"],
+    "cobertura": "nacional",
+    "estados": [],
+    "situaciones": ["nuevo"],
+    "grupo": "B"
+  }
+]

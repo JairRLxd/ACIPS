@@ -59,10 +59,21 @@
     "modalidad": "presencial",
     "permite_envio_virtual": false,
     "emite_constancia": false,
+    "modulo_atencion": {
+      "direccion": "Av. Insurgentes Sur 1480, Col. Barrio Actipan, Benito Juárez, 03230 Ciudad de México, CDMX",
+      "horario": "Lunes a Viernes de 9:00 AM a 5:00 PM",
+      "telefono": "55-5328-5000",
+      "contacto": "Lic. María González - Coordinadora de Atención",
+      "coordenadas": {
+        "lat": 19.3687,
+        "lng": -99.1716
+      }
+    },
     "tags": ["pension", "adultos mayores", "bienestar", "apoyo economico"],
     "cobertura": "nacional",
     "estados": [],
-    "situaciones": ["nuevo", "renovacion"]
+    "situaciones": ["nuevo", "renovacion"],
+    "grupo": "A"
   },
   {
     "id": 2,
@@ -128,7 +139,9 @@
     "tags": ["beca", "estudiantes", "preparatoria", "educacion"],
     "cobertura": "nacional",
     "estados": [],
-    "situaciones": ["nuevo", "continuidad"]
+    "situaciones": ["nuevo", "continuidad"],
+    "grupo": "B",
+    "tipo_documento_generado": "solicitud_beca"
   },
   {
     "id": 3,
@@ -200,7 +213,8 @@
     "tags": ["campo", "rural", "agricultura", "reforestacion"],
     "cobertura": "nacional",
     "estados": [],
-    "situaciones": ["nuevo", "productivo"]
+    "situaciones": ["nuevo", "productivo"],
+    "grupo": "A"
   },
   {
     "id": 4,
@@ -266,7 +280,9 @@
     "tags": ["jovenes", "capacitacion", "empleo", "beca"],
     "cobertura": "nacional",
     "estados": [],
-    "situaciones": ["nuevo"]
+    "situaciones": ["nuevo"],
+    "grupo": "B",
+    "tipo_documento_generado": "declaracion_joven"
   },
   {
     "id": 5,
@@ -338,7 +354,8 @@
     "tags": ["madres trabajadoras", "ninos", "cuidado infantil", "apoyo economico"],
     "cobertura": "nacional",
     "estados": [],
-    "situaciones": ["nuevo", "renovacion"]
+    "situaciones": ["nuevo", "renovacion"],
+    "grupo": "A"
   },
   {
     "id": 6,
@@ -400,9 +417,20 @@
     "modalidad": "presencial",
     "permite_envio_virtual": false,
     "emite_constancia": true,
+    "modulo_atencion": {
+      "direccion": "Paseo de la Reforma 116, Col. Juárez, Cuauhtémoc, 06600 Ciudad de México, CDMX",
+      "horario": "Lunes a Viernes de 8:30 AM a 4:30 PM",
+      "telefono": "55-5209-8700",
+      "contacto": "Lic. Ana Martínez - Atención a Jefas de Familia",
+      "coordenadas": {
+        "lat": 19.4326,
+        "lng": -99.1332
+      }
+    },
     "tags": ["seguro de vida", "jefas de familia", "proteccion", "hijos"],
     "cobertura": "nacional",
     "estados": [],
-    "situaciones": ["nuevo"]
+    "situaciones": ["nuevo"],
+    "grupo": "A"
   }
 ]

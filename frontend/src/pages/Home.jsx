@@ -1,7 +1,27 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { useState, useEffect } from 'react'
+import { obtenerTramites } from '../repositories/tramitesRepository'
 
 export default function Home() {
+  const [programas, setProgramas] = useState([])
+  const [loadingProgramas, setLoadingProgramas] = useState(true)
+
+  // Cargar programas desde el backend
+  useEffect(() => {
+    const cargarProgramas = async () => {
+      try {
+        setLoadingProgramas(true)
+        const response = await obtenerTramites()
+        setProgramas(response.data.programas || [])
+      } catch (error) {
+        console.error('Error al cargar programas:', error)
+      } finally {
+        setLoadingProgramas(false)
+      }
+    }
+    cargarProgramas()
+  }, [])
+
   return (
     <div className="min-h-screen">
       {/* Hero Section Mejorado - Con espacio para imagen a la derecha */}
@@ -76,15 +96,10 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Espacio para imagen a la derecha */}
+          {/* Espacio para imagen a la derecha - Carrusel de imágenes */}
           <div className="hidden lg:flex items-center justify-center animate-fade-in-up animation-delay-300">
             <div className="relative w-full max-w-[600px] h-[600px] flex items-center justify-center">
-              {/* Logo de ACIPS */}
-              <img 
-                src="/images/logo.png" 
-                alt="ACIPS Logo" 
-                className="w-full h-full object-contain drop-shadow-2xl animate-float"
-              />
+              <ImageCarousel />
             </div>
           </div>
         </div>
@@ -150,101 +165,25 @@ export default function Home() {
         </div>
         
         {/* Carrusel */}
-        <div className="relative">
-          <div className="flex gap-8 animate-carousel">
-            {/* Primera copia de las tarjetas */}
-            <ProgramCard
-              programaId="1"
-              title="Pensión para Adultos Mayores"
-              monto="$3,100"
-              periodo="bimestrales"
-              descripcion="Para personas de 65 años o más"
-              color="from-blue-500 to-blue-600"
-              iconBg="bg-blue-100"
-              iconColor="text-blue-600"
-              image="/images/pension-adultos.png"
-            />
-            <ProgramCard
-              programaId="2"
-              title="Beca Benito Juárez"
-              monto="$840"
-              periodo="bimestrales"
-              descripcion="Para estudiantes de educación básica"
-              color="from-purple-500 to-purple-600"
-              iconBg="bg-purple-100"
-              iconColor="text-purple-600"
-              image="/images/beca-benito.png"
-            />
-            <ProgramCard
-              programaId="3"
-              title="Sembrando Vida"
-              monto="$5,000"
-              periodo="mensuales"
-              descripcion="Para productores rurales con tierra"
-              color="from-green-500 to-green-600"
-              iconBg="bg-green-100"
-              iconColor="text-green-600"
-              image="/images/sembrando-vida.png"
-            />
-            <ProgramCard
-              programaId="4"
-              title="Jóvenes Construyendo el Futuro"
-              monto="$6,310"
-              periodo="mensuales"
-              descripcion="Para jóvenes de 18-29 años"
-              color="from-orange-500 to-orange-600"
-              iconBg="bg-orange-100"
-              iconColor="text-orange-600"
-              image="/images/jovenes-futuro.png"
-            />
-            <ProgramCard
-              programaId="5"
-              title="Seguro de Vida para Jefas de Familia"
-              monto="$124,000"
-              periodo="seguro"
-              descripcion="Para mujeres jefas de familia"
-              color="from-pink-500 to-pink-600"
-              iconBg="bg-pink-100"
-              iconColor="text-pink-600"
-              image="/images/seguro-jefas.png"
-            />
-            
-            {/* Segunda copia para loop infinito */}
-            <ProgramCard
-              programaId="1"
-              title="Pensión para Adultos Mayores"
-              monto="$3,100"
-              periodo="bimestrales"
-              descripcion="Para personas de 65 años o más"
-              color="from-blue-500 to-blue-600"
-              iconBg="bg-blue-100"
-              iconColor="text-blue-600"
-              image="/images/pension-adultos.png"
-            />
-            <ProgramCard
-              programaId="2"
-              title="Beca Benito Juárez"
-              monto="$840"
-              periodo="bimestrales"
-              descripcion="Para estudiantes de educación básica"
-              color="from-purple-500 to-purple-600"
-              iconBg="bg-purple-100"
-              iconColor="text-purple-600"
-              image="/images/beca-benito.png"
-            />
-            <ProgramCard
-              programaId="3"
-              title="Sembrando Vida"
-              monto="$5,000"
-              periodo="mensuales"
-              descripcion="Para productores rurales con tierra"
-              color="from-green-500 to-green-600"
-              iconBg="bg-green-100"
-              iconColor="text-green-600"
-              image="/images/sembrando-vida.png"
-            />
+        {loadingProgramas ? (
+          <div className="flex justify-center items-center py-20">
+            <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-200" style={{ borderTopColor: '#410016' }}></div>
           </div>
-        </div>
+        ) : (
+          <div className="relative">
+            <div className="flex gap-8 animate-carousel">
+              {/* Primera copia de las tarjetas */}
+              {programas.map((programa) => (
+                <ProgramCardDynamic key={`first-${programa.id}`} programa={programa} />
+              ))}
+              
+              {/* Segunda copia para loop infinito */}
+              {programas.map((programa) => (
+                <ProgramCardDynamic key={`second-${programa.id}`} programa={programa} />
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Sección de Confianza y Beneficios */}
@@ -373,7 +312,9 @@ export default function Home() {
           {/* Estadísticas mejoradas */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 max-w-4xl mx-auto">
             <div className="bg-gradient-to-br from-rose-50 to-pink-50 rounded-2xl p-6 border border-rose-100">
-              <div className="text-5xl font-black mb-2" style={{ color: '#410016' }}>5+</div>
+              <div className="text-5xl font-black mb-2" style={{ color: '#410016' }}>
+                {loadingProgramas ? '...' : `${programas.length}+`}
+              </div>
               <div className="text-gray-600 font-semibold">Programas Disponibles</div>
             </div>
             <div className="bg-gradient-to-br from-rose-50 to-pink-50 rounded-2xl p-6 border border-rose-100">
@@ -388,6 +329,52 @@ export default function Home() {
         </div>
       </div>
     </div>
+
+      {/* Botón flotante de WhatsApp */}
+      <WhatsAppFloatingButton />
+    </div>
+  )
+}
+
+// Botón flotante de WhatsApp
+function WhatsAppFloatingButton() {
+  const navigate = useNavigate()
+  const [mostrarTooltip, setMostrarTooltip] = useState(false)
+
+  return (
+    <div className="fixed bottom-6 right-6 z-50">
+      {/* Tooltip */}
+      {mostrarTooltip && (
+        <div className="absolute bottom-full right-0 mb-3 animate-fade-in">
+          <div className="bg-white px-4 py-3 rounded-xl shadow-2xl border border-gray-200 whitespace-nowrap">
+            <p className="text-sm font-bold text-gray-900 mb-1">¿Necesitas ayuda?</p>
+            <p className="text-xs text-gray-600">Chatea con nosotros por WhatsApp</p>
+          </div>
+          <div className="absolute bottom-0 right-6 transform translate-y-1/2 rotate-45 w-3 h-3 bg-white border-r border-b border-gray-200"></div>
+        </div>
+      )}
+
+      {/* Botón */}
+      <button
+        onClick={() => navigate('/whatsapp')}
+        onMouseEnter={() => setMostrarTooltip(true)}
+        onMouseLeave={() => setMostrarTooltip(false)}
+        className="group relative w-16 h-16 rounded-full shadow-2xl hover:shadow-3xl transition-all duration-300 hover:scale-110 flex items-center justify-center animate-bounce-slow"
+        style={{ backgroundColor: '#25D366' }}
+      >
+        {/* Efecto de pulso */}
+        <div className="absolute inset-0 rounded-full animate-ping opacity-20" style={{ backgroundColor: '#25D366' }}></div>
+        
+        {/* Icono de WhatsApp */}
+        <svg className="w-9 h-9 text-white relative z-10" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+        </svg>
+
+        {/* Badge de notificación */}
+        <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center border-2 border-white">
+          <span className="text-xs font-bold text-white">1</span>
+        </div>
+      </button>
     </div>
   )
 }
@@ -442,6 +429,80 @@ function TypewriterText() {
       {text}
       <span className="animate-pulse" style={{ color: '#410016' }}>|</span>
     </span>
+  )
+}
+
+// Componente de Carrusel de Imágenes Circular
+function ImageCarousel() {
+  const images = [
+    '/images/hero-1.png',
+    '/images/hero-2.png',
+    '/images/hero-3.png',
+    '/images/hero-4.png'
+  ]
+  
+  const [currentIndex, setCurrentIndex] = useState(0)
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentIndex((prevIndex) => (prevIndex + 1) % images.length)
+    }, 4000) // Cambia cada 4 segundos
+
+    return () => clearInterval(interval)
+  }, [images.length])
+
+  return (
+    <div className="relative w-full h-full flex items-center justify-center">
+      {/* Contenedor circular con borde decorativo */}
+      <div className="relative w-[500px] h-[500px]">
+        {/* Borde decorativo animado */}
+        <div className="absolute inset-0 rounded-full animate-spin-slow" 
+          style={{ 
+            background: 'linear-gradient(45deg, #410016, #D4AF37, #410016)',
+            padding: '4px'
+          }}>
+          <div className="w-full h-full rounded-full bg-white"></div>
+        </div>
+        
+        {/* Imágenes circulares */}
+        <div className="absolute inset-2 rounded-full overflow-hidden shadow-2xl">
+          {images.map((image, index) => (
+            <img
+              key={index}
+              src={image}
+              alt={`ACIPS Hero ${index + 1}`}
+              className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${
+                index === currentIndex ? 'opacity-100' : 'opacity-0'
+              }`}
+              style={{
+                transform: index === currentIndex ? 'scale(1)' : 'scale(0.95)',
+                transition: 'opacity 1s ease-in-out, transform 1s ease-in-out'
+              }}
+            />
+          ))}
+        </div>
+      </div>
+      
+      {/* Indicadores de posición */}
+      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+        {images.map((_, index) => (
+          <button
+            key={index}
+            onClick={() => setCurrentIndex(index)}
+            className={`w-3 h-3 rounded-full transition-all duration-300 ${
+              index === currentIndex 
+                ? 'w-8 opacity-100' 
+                : 'opacity-50 hover:opacity-75'
+            }`}
+            style={{ 
+              backgroundColor: index === currentIndex ? '#410016' : '#D4AF37',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.3)'
+            }}
+            aria-label={`Ir a imagen ${index + 1}`}
+          />
+        ))}
+      </div>
+    </div>
   )
 }
 
@@ -587,6 +648,118 @@ function ProgramCard({ title, monto, periodo, descripcion, color, iconBg, iconCo
         <div className="bg-white/90 backdrop-blur-sm text-green-600 text-xs font-bold px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1">
           <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
           Disponible
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Componente dinámico que carga datos desde Firebase
+function ProgramCardDynamic({ programa }) {
+  const navigate = useNavigate()
+  
+  // Mapeo de colores según el ID del programa
+  const colorMap = {
+    1: { color: 'from-blue-500 to-blue-600', iconBg: 'bg-blue-100', iconColor: 'text-blue-600' },
+    2: { color: 'from-purple-500 to-purple-600', iconBg: 'bg-purple-100', iconColor: 'text-purple-600' },
+    3: { color: 'from-green-500 to-green-600', iconBg: 'bg-green-100', iconColor: 'text-green-600' },
+    4: { color: 'from-orange-500 to-orange-600', iconBg: 'bg-orange-100', iconColor: 'text-orange-600' },
+    5: { color: 'from-pink-500 to-pink-600', iconBg: 'bg-pink-100', iconColor: 'text-pink-600' },
+    6: { color: 'from-indigo-500 to-indigo-600', iconBg: 'bg-indigo-100', iconColor: 'text-indigo-600' },
+    7: { color: 'from-red-500 to-red-600', iconBg: 'bg-red-100', iconColor: 'text-red-600' },
+    8: { color: 'from-yellow-500 to-yellow-600', iconBg: 'bg-yellow-100', iconColor: 'text-yellow-600' },
+    9: { color: 'from-teal-500 to-teal-600', iconBg: 'bg-teal-100', iconColor: 'text-teal-600' },
+    10: { color: 'from-cyan-500 to-cyan-600', iconBg: 'bg-cyan-100', iconColor: 'text-cyan-600' },
+    11: { color: 'from-lime-500 to-lime-600', iconBg: 'bg-lime-100', iconColor: 'text-lime-600' },
+    12: { color: 'from-amber-500 to-amber-600', iconBg: 'bg-amber-100', iconColor: 'text-amber-600' },
+    13: { color: 'from-rose-500 to-rose-600', iconBg: 'bg-rose-100', iconColor: 'text-rose-600' },
+    14: { color: 'from-violet-500 to-violet-600', iconBg: 'bg-violet-100', iconColor: 'text-violet-600' },
+    15: { color: 'from-fuchsia-500 to-fuchsia-600', iconBg: 'bg-fuchsia-100', iconColor: 'text-fuchsia-600' },
+    16: { color: 'from-emerald-500 to-emerald-600', iconBg: 'bg-emerald-100', iconColor: 'text-emerald-600' },
+  }
+  
+  // Mapeo de imágenes según tags o nombre
+  const getImage = (programa) => {
+    const tags = programa.tags || []
+    const nombre = programa.nombre.toLowerCase()
+    
+    if (tags.includes('pension') || nombre.includes('pension') || nombre.includes('adultos mayores')) return '/images/pension-adultos.png'
+    if (tags.includes('beca') || nombre.includes('beca') || nombre.includes('benito')) return '/images/beca-benito.png'
+    if (tags.includes('sembrando') || nombre.includes('sembrando')) return '/images/sembrando-vida.png'
+    if (tags.includes('jovenes') || nombre.includes('jovenes') || nombre.includes('jóvenes')) return '/images/jovenes-futuro.png'
+    if (tags.includes('jefas') || nombre.includes('jefas') || nombre.includes('seguro')) return '/images/seguro-jefas.png'
+    
+    // Imagen por defecto
+    return '/images/hero-1.png'
+  }
+  
+  const colors = colorMap[programa.id] || colorMap[1]
+  const image = getImage(programa)
+  
+  const handleVerDetalles = () => {
+    navigate(`/tramite/${programa.id}`)
+  }
+
+  return (
+    <div className="group relative bg-white rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden border border-gray-100 hover:-translate-y-2 flex-shrink-0 w-[350px]">
+      {/* Imagen de fondo */}
+      <div className="relative h-64 overflow-hidden">
+        <img 
+          src={image} 
+          alt={programa.nombre}
+          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
+        
+        {/* Contenido sobre la imagen */}
+        <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
+          {/* Icono */}
+          <div className={`${colors.iconBg} ${colors.iconColor} w-14 h-14 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
+            <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          
+          {/* Monto y periodo */}
+          <div className="text-white">
+            <div className="text-4xl font-black mb-1">{programa.monto}</div>
+            <div className="text-white/90 text-sm font-semibold uppercase tracking-wide">{programa.periodicidad}</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Contenido inferior */}
+      <div className="p-6 bg-white">
+        <h4 className="text-xl font-bold text-gray-900 mb-3 leading-tight line-clamp-2">
+          {programa.nombre}
+        </h4>
+        <p className="text-gray-600 mb-6 leading-relaxed line-clamp-2">
+          {programa.descripcion}
+        </p>
+
+        <button 
+          onClick={handleVerDetalles}
+          className="w-full text-white font-semibold py-3 px-6 rounded-xl hover:shadow-lg transition-all duration-300 flex items-center justify-center gap-2 group-hover:gap-3"
+          style={{ background: 'linear-gradient(to right, #410016, #5a0020)' }}
+        >
+          <span>Ver Detalles</span>
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+          </svg>
+        </button>
+      </div>
+
+      {/* Badge de disponibilidad */}
+      <div className="absolute top-4 right-4">
+        <div className={`backdrop-blur-sm text-xs font-bold px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1 ${
+          programa.grupo === 'B' 
+            ? 'bg-emerald-100/90 text-emerald-700' 
+            : 'bg-white/90 text-green-600'
+        }`}>
+          <span className={`w-2 h-2 rounded-full animate-pulse ${
+            programa.grupo === 'B' ? 'bg-emerald-500' : 'bg-green-500'
+          }`}></span>
+          {programa.grupo === 'B' ? 'En línea' : 'Disponible'}
         </div>
       </div>
     </div>

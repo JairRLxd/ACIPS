@@ -20,7 +20,7 @@ app = Flask(__name__)
 CORS(app, 
      resources={r"/api/*": {
          "origins": ["http://localhost:5173", "http://127.0.0.1:5173"],
-         "methods": ["GET", "POST", "DELETE", "OPTIONS"],
+         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
          "allow_headers": ["Content-Type", "Authorization"],
          "supports_credentials": False
      }})
@@ -47,21 +47,37 @@ except Exception as e:
 # Almacenar historial de conversaciones en memoria (fallback)
 conversaciones_memoria = {}
 
+# Importar y registrar endpoint de trámites virtuales
+from enviar_tramite_online import crear_endpoint_tramite_online
+crear_endpoint_tramite_online(app, db)
+
 @app.route('/api/v1/health', methods=['GET'])
 def health():
     return jsonify({"status": "ok", "version": "1.0.0", "ai": "Groq"}), 200
 
 @app.route('/api/v1/tramites', methods=['GET'])
 def tramites():
-    """Obtener lista de todos los programas desde programas.json"""
+    """Obtener lista de todos los programas desde Firebase Firestore"""
     try:
-        import json
-        
-        # Leer el archivo programas.json
-        programas_path = os.path.join(os.path.dirname(__file__), 'data', 'programas.json')
-        
-        with open(programas_path, 'r', encoding='utf-8') as f:
-            programas = json.load(f)
+        if not db:
+            # Fallback a JSON si Firebase no está disponible
+            import json
+            programas_path = os.path.join(os.path.dirname(__file__), 'data', 'programas_completos.json')
+            with open(programas_path, 'r', encoding='utf-8') as f:
+                programas = json.load(f)
+        else:
+            # Obtener programas desde Firebase
+            programas_ref = db.collection('programas')
+            programas_docs = programas_ref.stream()
+            
+            programas = []
+            for doc in programas_docs:
+                programa_data = doc.to_dict()
+                programa_data['id'] = int(doc.id)  # Asegurar que el ID sea entero
+                programas.append(programa_data)
+            
+            # Ordenar por ID
+            programas.sort(key=lambda x: x['id'])
         
         # Simplificar la información para la lista
         programas_lista = [
@@ -72,20 +88,19 @@ def tramites():
                 "monto": p['monto'],
                 "periodicidad": p['periodicidad'],
                 "dependencia": p.get('dependencia', ''),
-                "tags": p.get('tags', [])
+                "tags": p.get('tags', []),
+                "modalidad": p.get('modalidad', 'presencial'),
+                "grupo": p.get('grupo', 'A')
             }
             for p in programas
         ]
         
         return jsonify({"programas": programas_lista}), 200
         
-    except FileNotFoundError:
-        return jsonify({
-            "error": "Archivo de programas no encontrado",
-            "programas": []
-        }), 500
     except Exception as e:
         print(f"❌ Error al obtener trámites: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return jsonify({
             "error": str(e),
             "programas": []
@@ -93,18 +108,28 @@ def tramites():
 
 @app.route('/api/v1/tramites/<int:programa_id>', methods=['GET'])
 def obtener_tramite(programa_id):
-    """Obtener detalles completos de un programa específico desde programas.json"""
+    """Obtener detalles completos de un programa específico desde Firebase Firestore"""
     try:
-        import json
-        
-        # Leer el archivo programas.json
-        programas_path = os.path.join(os.path.dirname(__file__), 'data', 'programas.json')
-        
-        with open(programas_path, 'r', encoding='utf-8') as f:
-            programas = json.load(f)
-        
-        # Buscar el programa por ID
-        programa = next((p for p in programas if p['id'] == programa_id), None)
+        if not db:
+            # Fallback a JSON si Firebase no está disponible
+            import json
+            programas_path = os.path.join(os.path.dirname(__file__), 'data', 'programas_completos.json')
+            with open(programas_path, 'r', encoding='utf-8') as f:
+                programas = json.load(f)
+            programa = next((p for p in programas if p['id'] == programa_id), None)
+        else:
+            # Obtener programa desde Firebase
+            doc_ref = db.collection('programas').document(str(programa_id))
+            doc = doc_ref.get()
+            
+            if not doc.exists:
+                return jsonify({
+                    "success": False,
+                    "error": "Programa no encontrado"
+                }), 404
+            
+            programa = doc.to_dict()
+            programa['id'] = int(doc.id)  # Asegurar que el ID sea entero
         
         if not programa:
             return jsonify({
@@ -112,17 +137,13 @@ def obtener_tramite(programa_id):
                 "error": "Programa no encontrado"
             }), 404
         
-        # Devolver el programa completo tal como está en el JSON
-        # El frontend espera recibir el objeto directamente
+        # Devolver el programa completo
         return jsonify(programa), 200
         
-    except FileNotFoundError:
-        return jsonify({
-            "success": False,
-            "error": "Archivo de programas no encontrado"
-        }), 500
     except Exception as e:
         print(f"❌ Error al obtener trámite: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return jsonify({
             "success": False,
             "error": str(e)
@@ -612,26 +633,741 @@ def extraer_texto_imagen(contenido_bytes):
         print(f"Error al extraer texto de imagen: {e}")
         return f"[Error al procesar imagen: {str(e)}]"
 
-@app.route('/api/v1/auth/me', methods=['GET', 'OPTIONS'])
-def auth_me():
-    """Endpoint para sincronizar usuario con el backend"""
+@app.route('/api/v1/tramites-virtuales/mis-solicitudes', methods=['GET', 'OPTIONS'])
+def obtener_mis_solicitudes():
+    """Endpoint para que un usuario obtenga sus propias solicitudes"""
     if request.method == 'OPTIONS':
         return jsonify({'status': 'ok'}), 200
     
     try:
-        # En una implementación completa, aquí verificarías el token de Firebase
-        # Por ahora, retornamos un usuario de ejemplo
+        # Verificar autenticación
+        auth_header = request.headers.get('Authorization', '')
+        
+        if not auth_header.startswith('Bearer '):
+            return jsonify({
+                "success": False,
+                "error": "Token no proporcionado"
+            }), 401
+        
+        id_token = auth_header.split('Bearer ')[1]
+        
+        if not db:
+            # Si no hay Firebase, retornar datos de ejemplo
+            return jsonify({
+                "success": True,
+                "data": {
+                    "tramites_virtuales": []
+                }
+            }), 200
+        
+        # Verificar el token de Firebase
+        from firebase_admin import auth as firebase_auth
+        decoded_token = firebase_auth.verify_id_token(id_token)
+        uid = decoded_token['uid']
+        
+        # Obtener los trámites del usuario desde Firestore
+        tramites_ref = db.collection('tramites_virtuales').where('usuario_uid', '==', uid)
+        tramites_docs = tramites_ref.stream()
+        
+        tramites = []
+        for doc in tramites_docs:
+            tramite_data = doc.to_dict()
+            tramite_data['expediente_id'] = doc.id
+            
+            # Convertir timestamps a strings si existen
+            if 'fecha_creacion' in tramite_data:
+                if hasattr(tramite_data['fecha_creacion'], 'isoformat'):
+                    tramite_data['fecha_creacion'] = tramite_data['fecha_creacion'].isoformat()
+                elif hasattr(tramite_data['fecha_creacion'], 'strftime'):
+                    tramite_data['fecha_creacion'] = tramite_data['fecha_creacion'].strftime('%Y-%m-%dT%H:%M:%S')
+            
+            # Agregar información del programa si existe
+            if 'programa_id' in tramite_data:
+                programa_id = tramite_data['programa_id']
+                # Mapeo simple de IDs a nombres (puedes mejorarlo consultando una colección de programas)
+                programas_map = {
+                    '1': 'Pensión para Adultos Mayores',
+                    '2': 'Beca Benito Juárez',
+                    '3': 'Sembrando Vida',
+                    '4': 'Jóvenes Construyendo el Futuro',
+                    '5': 'Seguro de Vida para Jefas de Familia'
+                }
+                tramite_data['programa_nombre'] = programas_map.get(str(programa_id), 'Programa Social')
+            
+            tramites.append(tramite_data)
+        
+        # Ordenar por fecha de creación (más recientes primero)
+        tramites.sort(key=lambda x: x.get('fecha_creacion', ''), reverse=True)
+        
+        print(f"✅ Usuario {uid} consultó {len(tramites)} solicitudes propias")
+        
         return jsonify({
             "success": True,
-            "user": {
-                "uid": "demo-user",
-                "email": "demo@acips.com",
-                "displayName": "Usuario Demo"
+            "data": {
+                "tramites_virtuales": tramites
             }
         }), 200
+        
     except Exception as e:
+        print(f"❌ Error en obtener_mis_solicitudes: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({
             "success": False,
+            "error": str(e)
+        }), 500
+
+
+@app.route('/api/v1/admin/tramites-virtuales', methods=['GET', 'OPTIONS'])
+def listar_tramites_admin():
+    """Endpoint para que el admin liste todos los trámites virtuales"""
+    if request.method == 'OPTIONS':
+        return jsonify({'status': 'ok'}), 200
+    
+    try:
+        # Verificar que el usuario sea admin
+        auth_header = request.headers.get('Authorization', '')
+        
+        if not auth_header.startswith('Bearer '):
+            return jsonify({
+                "success": False,
+                "error": "Token no proporcionado"
+            }), 401
+        
+        id_token = auth_header.split('Bearer ')[1]
+        
+        if not db:
+            # Si no hay Firebase, retornar datos de ejemplo
+            return jsonify({
+                "success": True,
+                "tramites_virtuales": []
+            }), 200
+        
+        # Verificar el token de Firebase
+        from firebase_admin import auth as firebase_auth
+        decoded_token = firebase_auth.verify_id_token(id_token)
+        uid = decoded_token['uid']
+        
+        # Verificar que el usuario sea admin
+        user_ref = db.collection('usuarios').document(uid)
+        user_doc = user_ref.get()
+        
+        if not user_doc.exists or user_doc.to_dict().get('rol') != 'admin':
+            return jsonify({
+                "success": False,
+                "error": "No tienes permisos de administrador"
+            }), 403
+        
+        # Obtener todos los trámites virtuales de Firestore
+        tramites_ref = db.collection('tramites_virtuales')
+        tramites_docs = tramites_ref.stream()
+        
+        tramites = []
+        for doc in tramites_docs:
+            tramite_data = doc.to_dict()
+            tramite_data['id'] = doc.id
+            tramites.append(tramite_data)
+        
+        print(f"✅ Admin {uid} consultó {len(tramites)} trámites virtuales")
+        
+        return jsonify({
+            "success": True,
+            "tramites_virtuales": tramites
+        }), 200
+        
+    except Exception as e:
+        print(f"❌ Error en listar_tramites_admin: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+
+@app.route('/api/v1/admin/usuarios', methods=['GET', 'OPTIONS'])
+def listar_usuarios_admin():
+    """Endpoint para que el admin liste todos los usuarios"""
+    if request.method == 'OPTIONS':
+        return jsonify({'status': 'ok'}), 200
+    
+    try:
+        # Verificar que el usuario sea admin
+        auth_header = request.headers.get('Authorization', '')
+        
+        if not auth_header.startswith('Bearer '):
+            return jsonify({
+                "success": False,
+                "error": "Token no proporcionado"
+            }), 401
+        
+        id_token = auth_header.split('Bearer ')[1]
+        
+        if not db:
+            # Si no hay Firebase, retornar datos de ejemplo
+            return jsonify({
+                "success": True,
+                "usuarios": []
+            }), 200
+        
+        # Verificar el token de Firebase
+        from firebase_admin import auth as firebase_auth
+        decoded_token = firebase_auth.verify_id_token(id_token)
+        uid = decoded_token['uid']
+        
+        # Verificar que el usuario sea admin
+        user_ref = db.collection('usuarios').document(uid)
+        user_doc = user_ref.get()
+        
+        if not user_doc.exists or user_doc.to_dict().get('rol') != 'admin':
+            return jsonify({
+                "success": False,
+                "error": "No tienes permisos de administrador"
+            }), 403
+        
+        # Obtener todos los usuarios de Firestore
+        usuarios_ref = db.collection('usuarios')
+        usuarios_docs = usuarios_ref.stream()
+        
+        usuarios = []
+        for doc in usuarios_docs:
+            usuario_data = doc.to_dict()
+            usuario_data['uid'] = doc.id  # Asegurar que el UID esté presente
+            usuarios.append(usuario_data)
+        
+        print(f"✅ Admin {uid} consultó {len(usuarios)} usuarios")
+        
+        return jsonify({
+            "success": True,
+            "usuarios": usuarios
+        }), 200
+        
+    except Exception as e:
+        print(f"❌ Error en listar_usuarios_admin: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+
+@app.route('/api/v1/auth/me', methods=['GET', 'OPTIONS'])
+def auth_me():
+    """Endpoint para sincronizar usuario con el backend y obtener su rol desde Firestore"""
+    if request.method == 'OPTIONS':
+        return jsonify({'status': 'ok'}), 200
+    
+    try:
+        # Obtener el token de Firebase del header Authorization
+        auth_header = request.headers.get('Authorization', '')
+        
+        if not auth_header.startswith('Bearer '):
+            return jsonify({
+                "success": False,
+                "error": "Token no proporcionado"
+            }), 401
+        
+        id_token = auth_header.split('Bearer ')[1]
+        
+        # Verificar el token con Firebase Admin
+        if not db:
+            # Si no hay Firebase configurado, retornar usuario demo
+            return jsonify({
+                "success": True,
+                "data": {
+                    "uid": "demo-user",
+                    "email": "demo@acips.com",
+                    "nombre": "Usuario Demo",
+                    "rol": "ciudadano"
+                }
+            }), 200
+        
+        # Verificar el token de Firebase
+        from firebase_admin import auth as firebase_auth
+        decoded_token = firebase_auth.verify_id_token(id_token)
+        uid = decoded_token['uid']
+        email = decoded_token.get('email', '')
+        nombre = decoded_token.get('name', email.split('@')[0])
+        
+        print(f"👤 Usuario autenticado: {email} (UID: {uid})")
+        
+        # Buscar el usuario en Firestore
+        user_ref = db.collection('usuarios').document(uid)
+        user_doc = user_ref.get()
+        
+        if user_doc.exists:
+            # Usuario existe en Firestore
+            user_data = user_doc.to_dict()
+            print(f"✅ Usuario encontrado en Firestore con rol: {user_data.get('rol', 'ciudadano')}")
+            
+            # Actualizar last_login_at
+            user_ref.update({
+                'last_login_at': datetime.now().isoformat()
+            })
+            
+            return jsonify({
+                "success": True,
+                "data": {
+                    "uid": uid,
+                    "email": user_data.get('email', email),
+                    "nombre": user_data.get('nombre', nombre),
+                    "rol": user_data.get('rol', 'ciudadano'),
+                    "activo": user_data.get('activo', True)
+                }
+            }), 200
+        else:
+            # Usuario no existe en Firestore, crearlo como ciudadano
+            print(f"⚠️ Usuario no encontrado en Firestore, creando como ciudadano...")
+            
+            nuevo_usuario = {
+                "uid": uid,
+                "email": email,
+                "nombre": nombre,
+                "rol": "ciudadano",
+                "activo": True,
+                "created_at": datetime.now().isoformat(),
+                "last_login_at": datetime.now().isoformat()
+            }
+            
+            user_ref.set(nuevo_usuario)
+            print(f"✅ Usuario creado en Firestore")
+            
+            return jsonify({
+                "success": True,
+                "data": nuevo_usuario
+            }), 200
+            
+    except Exception as e:
+        print(f"❌ Error en auth/me: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+
+@app.route('/api/v1/admin/documentos', methods=['GET', 'OPTIONS'])
+def listar_documentos_admin():
+    """Endpoint para que el admin liste todos los documentos de validación"""
+    if request.method == 'OPTIONS':
+        return jsonify({'status': 'ok'}), 200
+    
+    try:
+        # Verificar que el usuario sea admin
+        auth_header = request.headers.get('Authorization', '')
+        
+        if not auth_header.startswith('Bearer '):
+            return jsonify({
+                "error": "Token no proporcionado"
+            }), 401
+        
+        id_token = auth_header.split('Bearer ')[1]
+        
+        if not db:
+            # Si no hay Firebase, retornar datos de ejemplo
+            return jsonify({
+                "data": []
+            }), 200
+        
+        # Verificar el token de Firebase
+        from firebase_admin import auth as firebase_auth
+        decoded_token = firebase_auth.verify_id_token(id_token)
+        uid = decoded_token['uid']
+        
+        # Verificar que el usuario sea admin
+        user_ref = db.collection('usuarios').document(uid)
+        user_doc = user_ref.get()
+        
+        if not user_doc.exists or user_doc.to_dict().get('rol') != 'admin':
+            return jsonify({
+                "error": "No tienes permisos de administrador"
+            }), 403
+        
+        # Obtener filtro de estado
+        estado = request.args.get('estado')
+        
+        # Obtener todos los documentos de validación de Firestore
+        validaciones_ref = db.collection('validaciones')
+        
+        # Obtener todos los documentos sin filtro primero
+        validaciones_docs = validaciones_ref.limit(100).stream()
+        
+        documentos = []
+        usuarios_cache = {}  # Cache para no consultar el mismo usuario múltiples veces
+        
+        for doc in validaciones_docs:
+            doc_data = doc.to_dict()
+            doc_data['id'] = doc.id
+            
+            # Si no tiene campo 'estado', asignar 'pendiente' por defecto
+            if 'estado' not in doc_data:
+                doc_data['estado'] = 'pendiente'
+            
+            # Formatear fecha de subida
+            if 'created_at' in doc_data:
+                try:
+                    if isinstance(doc_data['created_at'], str):
+                        doc_data['fecha_subida'] = doc_data['created_at']
+                    else:
+                        # Si es un timestamp de Firestore
+                        doc_data['fecha_subida'] = doc_data['created_at'].isoformat() if hasattr(doc_data['created_at'], 'isoformat') else str(doc_data['created_at'])
+                except:
+                    doc_data['fecha_subida'] = 'N/A'
+            else:
+                doc_data['fecha_subida'] = 'N/A'
+            
+            # Obtener tipo de documento
+            doc_data['tipo_documento'] = doc_data.get('tipo_detectado') or doc_data.get('tipo_esperado') or 'N/A'
+            
+            # Calcular confianza OCR (promedio si hay múltiples valores)
+            confianza_ocr = 0
+            if 'ocr_confidence_avg' in doc_data and doc_data['ocr_confidence_avg']:
+                confianza_ocr = doc_data['ocr_confidence_avg']
+            elif 'legible' in doc_data:
+                # Si es legible, asignar confianza alta, si no, baja
+                confianza_ocr = 0.85 if doc_data['legible'] else 0.3
+            
+            doc_data['confianza_ocr'] = confianza_ocr
+            
+            # Obtener nombre del archivo
+            doc_data['nombre_archivo'] = doc_data.get('nombre_archivo', 'documento')
+            
+            # Obtener información del programa
+            sesion_id = doc_data.get('sesion_id')
+            usuario_uid = doc_data.get('usuario_uid')
+            programa_nombre = 'N/A'
+            
+            # Intentar primero por sesion_id
+            if sesion_id:
+                try:
+                    tramites_query = db.collection('tramites_virtuales').where('sesion_id', '==', sesion_id).limit(1).stream()
+                    for tramite_doc in tramites_query:
+                        tramite_data = tramite_doc.to_dict()
+                        programa_id = tramite_data.get('programa_id')
+                        
+                        programas_map = {
+                            '1': 'Pensión para Adultos Mayores',
+                            '2': 'Beca Benito Juárez',
+                            '3': 'Sembrando Vida',
+                            '4': 'Jóvenes Construyendo el Futuro',
+                            '5': 'Seguro de Vida para Jefas de Familia'
+                        }
+                        programa_nombre = programas_map.get(str(programa_id), 'Programa Social')
+                        break
+                except Exception as e:
+                    pass
+            
+            # Si no se encontró por sesion_id, intentar por usuario_uid (sin ordenamiento para evitar índice)
+            if programa_nombre == 'N/A' and usuario_uid:
+                try:
+                    tramites_query = db.collection('tramites_virtuales').where('usuario_uid', '==', usuario_uid).limit(5).stream()
+                    tramites_list = []
+                    for tramite_doc in tramites_query:
+                        tramite_data = tramite_doc.to_dict()
+                        tramite_data['_id'] = tramite_doc.id
+                        tramites_list.append(tramite_data)
+                    
+                    # Ordenar en memoria por fecha_creacion
+                    if tramites_list:
+                        tramites_list.sort(key=lambda x: x.get('fecha_creacion', ''), reverse=True)
+                        tramite_data = tramites_list[0]
+                        programa_id = tramite_data.get('programa_id')
+                        
+                        programas_map = {
+                            '1': 'Pensión para Adultos Mayores',
+                            '2': 'Beca Benito Juárez',
+                            '3': 'Sembrando Vida',
+                            '4': 'Jóvenes Construyendo el Futuro',
+                            '5': 'Seguro de Vida para Jefas de Familia'
+                        }
+                        programa_nombre = programas_map.get(str(programa_id), 'Programa Social')
+                except Exception as e:
+                    pass
+            
+            doc_data['programa'] = programa_nombre
+            
+            # Obtener información del usuario
+            usuario_uid = doc_data.get('usuario_uid')
+            if usuario_uid:
+                # Verificar si ya tenemos este usuario en cache
+                if usuario_uid not in usuarios_cache:
+                    try:
+                        user_doc = db.collection('usuarios').document(usuario_uid).get()
+                        if user_doc.exists:
+                            user_data = user_doc.to_dict()
+                            usuarios_cache[usuario_uid] = {
+                                'nombre': user_data.get('nombre', 'Usuario'),
+                                'email': user_data.get('email', ''),
+                                'uid': usuario_uid
+                            }
+                        else:
+                            usuarios_cache[usuario_uid] = {
+                                'nombre': 'Usuario',
+                                'email': '',
+                                'uid': usuario_uid
+                            }
+                    except Exception as e:
+                        print(f"Error al obtener usuario {usuario_uid}: {e}")
+                        usuarios_cache[usuario_uid] = {
+                            'nombre': 'Usuario',
+                            'email': '',
+                            'uid': usuario_uid
+                        }
+                
+                # Agregar información del usuario al documento
+                doc_data['usuario'] = usuarios_cache[usuario_uid]
+            
+            # Aplicar filtro en memoria si es necesario
+            if estado and estado != 'todos':
+                if doc_data.get('estado') == estado:
+                    documentos.append(doc_data)
+            else:
+                documentos.append(doc_data)
+        
+        # Ordenar en memoria por created_at (más reciente primero)
+        documentos.sort(key=lambda x: x.get('created_at', ''), reverse=True)
+        
+        print(f"✅ Admin {uid} consultó {len(documentos)} documentos (filtro: {estado or 'todos'})")
+        
+        return jsonify({
+            "data": documentos
+        }), 200
+        
+    except Exception as e:
+        print(f"❌ Error en listar_documentos_admin: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            "error": str(e)
+        }), 500
+
+
+@app.route('/api/v1/admin/documentos/<string:documento_id>', methods=['GET', 'OPTIONS'])
+def obtener_documento_admin(documento_id):
+    """Endpoint para obtener un documento específico"""
+    if request.method == 'OPTIONS':
+        return jsonify({'status': 'ok'}), 200
+    
+    try:
+        # Verificar que el usuario sea admin
+        auth_header = request.headers.get('Authorization', '')
+        
+        if not auth_header.startswith('Bearer '):
+            return jsonify({
+                "error": "Token no proporcionado"
+            }), 401
+        
+        id_token = auth_header.split('Bearer ')[1]
+        
+        if not db:
+            return jsonify({
+                "error": "Firebase no configurado"
+            }), 500
+        
+        # Verificar el token de Firebase
+        from firebase_admin import auth as firebase_auth
+        decoded_token = firebase_auth.verify_id_token(id_token)
+        uid = decoded_token['uid']
+        
+        # Verificar que el usuario sea admin
+        user_ref = db.collection('usuarios').document(uid)
+        user_doc = user_ref.get()
+        
+        if not user_doc.exists or user_doc.to_dict().get('rol') != 'admin':
+            return jsonify({
+                "error": "No tienes permisos de administrador"
+            }), 403
+        
+        # Obtener el documento
+        doc_ref = db.collection('validaciones').document(documento_id)
+        doc = doc_ref.get()
+        
+        if not doc.exists:
+            return jsonify({
+                "error": "Documento no encontrado"
+            }), 404
+        
+        doc_data = doc.to_dict()
+        doc_data['id'] = doc.id
+        
+        return jsonify({
+            "data": doc_data
+        }), 200
+        
+    except Exception as e:
+        print(f"❌ Error en obtener_documento_admin: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            "error": str(e)
+        }), 500
+
+
+@app.route('/api/v1/admin/documentos/<string:documento_id>/validar', methods=['POST', 'OPTIONS'])
+def validar_documento_admin(documento_id):
+    """Endpoint para validar (aprobar o rechazar) un documento"""
+    if request.method == 'OPTIONS':
+        return jsonify({'status': 'ok'}), 200
+    
+    try:
+        # Verificar que el usuario sea admin
+        auth_header = request.headers.get('Authorization', '')
+        
+        if not auth_header.startswith('Bearer '):
+            return jsonify({
+                "error": "Token no proporcionado"
+            }), 401
+        
+        id_token = auth_header.split('Bearer ')[1]
+        
+        if not db:
+            return jsonify({
+                "error": "Firebase no configurado"
+            }), 500
+        
+        # Verificar el token de Firebase
+        from firebase_admin import auth as firebase_auth
+        decoded_token = firebase_auth.verify_id_token(id_token)
+        uid = decoded_token['uid']
+        
+        # Verificar que el usuario sea admin
+        user_ref = db.collection('usuarios').document(uid)
+        user_doc = user_ref.get()
+        
+        if not user_doc.exists or user_doc.to_dict().get('rol') != 'admin':
+            return jsonify({
+                "error": "No tienes permisos de administrador"
+            }), 403
+        
+        # Obtener datos de la petición
+        data = request.get_json()
+        decision = data.get('decision')
+        comentario = data.get('comentario', '')
+        
+        if decision not in ['aprobado', 'rechazado']:
+            return jsonify({
+                "error": "Decisión inválida. Debe ser 'aprobado' o 'rechazado'"
+            }), 400
+        
+        # Actualizar el documento
+        doc_ref = db.collection('validaciones').document(documento_id)
+        doc = doc_ref.get()
+        
+        if not doc.exists:
+            return jsonify({
+                "error": "Documento no encontrado"
+            }), 404
+        
+        # Actualizar estado
+        update_data = {
+            "estado": decision,
+            "validado_por": uid,
+            "fecha_validacion": datetime.now().isoformat(),
+            "comentario": comentario
+        }
+        
+        doc_ref.update(update_data)
+        
+        # Obtener documento actualizado
+        updated_doc = doc_ref.get()
+        doc_data = updated_doc.to_dict()
+        doc_data['id'] = updated_doc.id
+        
+        print(f"✅ Admin {uid} {decision} documento {documento_id}")
+        
+        return jsonify({
+            "data": doc_data,
+            "message": f"Documento {decision} exitosamente"
+        }), 200
+        
+    except Exception as e:
+        print(f"❌ Error en validar_documento_admin: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            "error": str(e)
+        }), 500
+
+
+@app.route('/api/v1/admin/documentos/estadisticas', methods=['GET', 'OPTIONS'])
+def obtener_estadisticas_documentos():
+    """Endpoint para obtener estadísticas de documentos"""
+    if request.method == 'OPTIONS':
+        return jsonify({'status': 'ok'}), 200
+    
+    try:
+        # Verificar que el usuario sea admin
+        auth_header = request.headers.get('Authorization', '')
+        
+        if not auth_header.startswith('Bearer '):
+            return jsonify({
+                "error": "Token no proporcionado"
+            }), 401
+        
+        id_token = auth_header.split('Bearer ')[1]
+        
+        if not db:
+            return jsonify({
+                "data": {
+                    "total": 0,
+                    "pendientes": 0,
+                    "aprobados": 0,
+                    "rechazados": 0
+                }
+            }), 200
+        
+        # Verificar el token de Firebase
+        from firebase_admin import auth as firebase_auth
+        decoded_token = firebase_auth.verify_id_token(id_token)
+        uid = decoded_token['uid']
+        
+        # Verificar que el usuario sea admin
+        user_ref = db.collection('usuarios').document(uid)
+        user_doc = user_ref.get()
+        
+        if not user_doc.exists or user_doc.to_dict().get('rol') != 'admin':
+            return jsonify({
+                "error": "No tienes permisos de administrador"
+            }), 403
+        
+        # Obtener todos los documentos y calcular estadísticas
+        all_docs = db.collection('validaciones').stream()
+        
+        total = 0
+        pendientes = 0
+        aprobados = 0
+        rechazados = 0
+        
+        for doc in all_docs:
+            data = doc.to_dict()
+            total += 1
+            estado = data.get('estado', 'pendiente')
+            
+            if estado == 'pendiente':
+                pendientes += 1
+            elif estado == 'aprobado':
+                aprobados += 1
+            elif estado == 'rechazado':
+                rechazados += 1
+        
+        stats = {
+            "total": total,
+            "pendientes": pendientes,
+            "aprobados": aprobados,
+            "rechazados": rechazados
+        }
+        
+        return jsonify({
+            "data": stats
+        }), 200
+        
+    except Exception as e:
+        print(f"❌ Error en obtener_estadisticas_documentos: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
             "error": str(e)
         }), 500
 

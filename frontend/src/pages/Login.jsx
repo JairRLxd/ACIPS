@@ -44,6 +44,13 @@ export default function Login() {
     const result = await loginGoogle()
 
     if (result.success) {
+      // Mostrar UID en consola para debugging
+      console.log('='.repeat(60))
+      console.log('TU UID DE FIREBASE:', result.user?.uid)
+      console.log('EMAIL:', result.user?.email)
+      console.log('ROL:', result.rol)
+      console.log('='.repeat(60))
+      
       navigate(result.rol === 'admin' ? '/admin' : '/')
     } else {
       setError(result.error)
