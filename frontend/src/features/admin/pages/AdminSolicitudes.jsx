@@ -6,6 +6,48 @@ import { obtenerExpedienteAdmin } from '../../../repositories/adminRepository'
 const BRAND = '#410016'
 const BRAND_MID = '#7a0028'
 
+const FIELD_LABELS = {
+  nombre: 'Nombre',
+  primer_apellido: 'Primer apellido',
+  segundo_apellido: 'Segundo apellido',
+  curp: 'CURP',
+  clave_elector: 'Clave de elector',
+  vigencia: 'Vigencia',
+  domicilio: 'Domicilio',
+  fecha_nacimiento: 'Fecha de nacimiento',
+  fecha_registro: 'Fecha de registro',
+  sexo: 'Sexo',
+  lugar_nacimiento: 'Lugar de nacimiento',
+  rfc: 'RFC',
+  folio: 'Folio',
+  certificacion: 'Certificación',
+  entidad_registro: 'Entidad de registro',
+  municipio_registro: 'Municipio de registro',
+  codigo_postal: 'Código postal',
+  titular: 'Titular',
+  fecha_emision: 'Fecha de emisión',
+  municipio: 'Municipio',
+  banco: 'Banco',
+  clabe: 'CLABE',
+  plantel: 'Plantel',
+  ciclo_escolar: 'Ciclo escolar',
+}
+
+function sanitizarObservacion(texto) {
+  if (!texto) return texto
+  return texto
+    .replace(/\bpymupdf[_\w]*/gi, '')
+    .replace(/\bpaddleocr\b/gi, '')
+    .replace(/\bocr\b/gi, '')
+    .replace(/\bgroq\b/gi, '')
+    .replace(/\bsobre archivo \w+\./gi, '')
+    .replace(/usando [\w+]+/gi, '')
+    .replace(/\bCampos completados con apoyo LLM[^.]*\./gi, '')
+    .replace(/\bDetalle: [^\n]*/gi, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim()
+}
+
 const TABS = [
   { key: 'todos', label: 'Todos', estado: null },
   { key: 'enviado', label: 'Pendientes', estado: 'enviado' },
@@ -334,26 +376,73 @@ export default function AdminSolicitudes() {
                       )}
                     </div>
 
-                    {/* Checklist de documentos */}
+                    {/* Documentos del expediente */}
                     {expediente.checklist && expediente.checklist.length > 0 && (
                       <div>
                         <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-2">
                           Documentos del expediente ({expediente.checklist.length})
                         </p>
-                        <div className="space-y-2">
-                          {expediente.checklist.map((item, i) => (
-                            <div key={i} className="flex items-start gap-3 bg-gray-50 rounded-xl px-3 py-2.5">
-                              <div className={`mt-0.5 w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 text-white text-xs font-bold ${item.estado === 'aprobado' ? 'bg-emerald-500' : 'bg-amber-400'}`}>
-                                {item.estado === 'aprobado' ? '✓' : '!'}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-xs font-semibold text-gray-700 truncate">{item.nombre}</p>
-                                {item.observacion && (
-                                  <p className="text-xs text-gray-400 truncate">{item.observacion}</p>
+                        <div className="space-y-3">
+                          {expediente.checklist.map((item, i) => {
+                            const docData = (expediente.documentos || []).find(
+                              (d) => d.requisito_id === item.requisito_id
+                            ) || {}
+                            const campos = Object.entries(docData.datos_extraidos || {}).filter(([, v]) => v)
+                            const preview = docData.archivo_base64_preview
+                            return (
+                              <div key={i} className="bg-gray-50 rounded-xl overflow-hidden border border-gray-100">
+                                {/* Thumbnail */}
+                                {preview ? (
+                                  <img
+                                    src={`data:image/jpeg;base64,${preview}`}
+                                    alt={item.nombre}
+                                    className="w-full h-32 object-cover"
+                                  />
+                                ) : docData.es_pdf ? (
+                                  <div className="w-full h-20 bg-red-50 border-b border-red-100 flex items-center gap-3 px-3">
+                                    <svg className="w-8 h-8 text-red-400 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                                      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm2 14H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
+                                    </svg>
+                                    <div className="min-w-0">
+                                      <p className="text-xs font-bold text-red-700">Documento PDF</p>
+                                      <p className="text-[10px] text-red-500 truncate">{docData.archivo_nombre || item.nombre}</p>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="w-full h-20 bg-gray-100 flex items-center justify-center">
+                                    <svg className="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                  </div>
                                 )}
+                                <div className="px-3 py-2.5">
+                                  <div className="flex items-center gap-2 mb-1.5">
+                                    <div className={`w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 text-white text-[10px] font-bold ${item.estado === 'aprobado' ? 'bg-emerald-500' : 'bg-amber-400'}`}>
+                                      {item.estado === 'aprobado' ? '✓' : '!'}
+                                    </div>
+                                    <p className="text-xs font-bold text-gray-800">{item.nombre}</p>
+                                  </div>
+                                  {item.observacion && (
+                                    <p className="text-xs text-gray-500 mb-2 leading-snug">
+                                      {sanitizarObservacion(item.observacion)}
+                                    </p>
+                                  )}
+                                  {campos.length > 0 && (
+                                    <div className="grid grid-cols-2 gap-x-3 gap-y-1 mt-2 pt-2 border-t border-gray-200">
+                                      {campos.map(([k, v]) => (
+                                        <div key={k}>
+                                          <p className="text-[10px] text-gray-400 uppercase tracking-wide leading-none mb-0.5">
+                                            {FIELD_LABELS[k] || k.replace(/_/g, ' ')}
+                                          </p>
+                                          <p className="text-xs font-semibold text-gray-700 truncate" title={String(v)}>{v}</p>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
                               </div>
-                            </div>
-                          ))}
+                            )
+                          })}
                         </div>
                       </div>
                     )}

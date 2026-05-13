@@ -286,7 +286,39 @@ function mapEstadoSolicitudPayload(documentos = [], checklist = {}) {
       tipo_detectado: estado.resultado?.tipo_detectado || null,
       es_correcto: estado.resultado?.es_correcto === true,
       observacion: estado.resultado?.observacion || estado.resultado?.mensaje_correccion || '',
+      datos_extraidos: estado.resultado?.datos_extraidos || estado.resultado?.datos_corregidos || {},
+      archivo_base64_preview: estado.resultado?.archivo_base64_preview || null,
+      archivo_nombre: estado.archivoNombre || null,
+      es_pdf: estado.resultado?.es_pdf || false,
     }
+  })
+}
+
+async function resizeToThumbnailBase64(file, maxDim = 200) {
+  if (!file || !file.type.startsWith('image/')) return null
+  return new Promise((resolve) => {
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      const img = new Image()
+      img.onload = () => {
+        try {
+          const ratio = Math.min(maxDim / img.width, maxDim / img.height, 1)
+          const w = Math.round(img.width * ratio)
+          const h = Math.round(img.height * ratio)
+          const canvas = document.createElement('canvas')
+          canvas.width = w
+          canvas.height = h
+          canvas.getContext('2d').drawImage(img, 0, 0, w, h)
+          resolve(canvas.toDataURL('image/jpeg', 0.65).split(',')[1])
+        } catch {
+          resolve(null)
+        }
+      }
+      img.onerror = () => resolve(null)
+      img.src = e.target.result
+    }
+    reader.onerror = () => resolve(null)
+    reader.readAsDataURL(file)
   })
 }
 
@@ -1434,6 +1466,7 @@ function ValidacionModal({ doc, sesionId, tramiteNombre, onClose, onResultado, o
   const [validationResponse, setValidationResponse] = useState(null)
   const [editableFields, setEditableFields] = useState([])
   const [editableData, setEditableData] = useState({})
+  const [thumbnailBase64, setThumbnailBase64] = useState(null)
   const inputRef = useRef()
   const { currentUser } = useAuth()
 
@@ -1447,7 +1480,7 @@ function ValidacionModal({ doc, sesionId, tramiteNombre, onClose, onResultado, o
     }
   }, [previewUrl])
 
-  const procesarArchivo = (file) => {
+  const procesarArchivo = async (file) => {
     setErrorLocal(null)
     setValidationResponse(null)
     if (!MIME_VALIDOS.includes(file.type)) {
@@ -1466,6 +1499,8 @@ function ValidacionModal({ doc, sesionId, tramiteNombre, onClose, onResultado, o
     const fields = getExpectedFieldKeys(tipoEsperado)
     setEditableFields(fields)
     setEditableData(buildEditableData(tipoEsperado))
+    const thumb = await resizeToThumbnailBase64(file, 200)
+    setThumbnailBase64(thumb)
   }
 
   const onDrop = (e) => {
@@ -1544,6 +1579,8 @@ function ValidacionModal({ doc, sesionId, tramiteNombre, onClose, onResultado, o
       datos_corregidos: editableData,
       tipo_detectado: validationResponse?.tipo_detectado || tipoEsperado,
       observacion: validationResponse?.observacion || 'Datos confirmados manualmente por la persona usuaria.',
+      archivo_base64_preview: thumbnailBase64 || null,
+      es_pdf: archivo.type === 'application/pdf',
     }
     onResultado(payload, archivo.name)
   }
