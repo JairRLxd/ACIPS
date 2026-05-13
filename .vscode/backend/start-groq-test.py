@@ -112,45 +112,9 @@ def obtener_tramite(programa_id):
                 "error": "Programa no encontrado"
             }), 404
         
-        # Extraer nombres de documentos para el checklist
-        documentos_nombres = [doc['nombre'] for doc in programa.get('documentos_requeridos', [])]
-        
-        # Extraer pasos del trámite
-        pasos = programa.get('pasos_tramite', [])
-        
-        # Crear checklist de documentos
-        checklist = {
-            "requeridos": [
-                {"nombre": doc, "estado": "FALTA"} 
-                for doc in documentos_nombres
-            ],
-            "porcentaje": 0
-        }
-        
-        # Preparar respuesta con toda la información
-        programa_detalle = {
-            "id": programa['id'],
-            "nombre": programa['nombre'],
-            "descripcion": programa['descripcion'],
-            "monto": programa['monto'],
-            "periodicidad": programa['periodicidad'],
-            "telefono_informes": programa.get('telefono_informes', 'No disponible'),
-            "oficina_tramite": programa.get('oficina_tramite', 'Consultar en oficinas locales'),
-            "dependencia": programa.get('dependencia', ''),
-            "url_oficial": programa.get('url_oficial', ''),
-            "documentos": documentos_nombres,
-            "pasos": pasos,
-            "modalidad": programa.get('modalidad', 'presencial'),
-            "tags": programa.get('tags', [])
-        }
-        
-        return jsonify({
-            "success": True,
-            "programa": programa_detalle,
-            "documentos": documentos_nombres,
-            "pasos": pasos,
-            "checklist": checklist
-        }), 200
+        # Devolver el programa completo tal como está en el JSON
+        # El frontend espera recibir el objeto directamente
+        return jsonify(programa), 200
         
     except FileNotFoundError:
         return jsonify({
