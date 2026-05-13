@@ -2,7 +2,7 @@ import axios from 'axios'
 import { auth } from '../config/firebase'
 
 const httpClient = axios.create({
-  baseURL: import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080/api/v1',
+  baseURL: import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000',
   withCredentials: false,
   headers: { 'Content-Type': 'application/json' },
 })

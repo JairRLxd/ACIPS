@@ -1,7 +1,7 @@
 import httpClient from '../infrastructure/httpClient'
 
 export const enviarMensajeChat = (mensaje, sesionId = null, perfilUsuario = null) =>
-  httpClient.post('/chat', {
+  httpClient.post('/api/v1/chat', {
     sesion_id: sesionId,
     mensaje,
     ...(perfilUsuario && { perfil_usuario: perfilUsuario }),

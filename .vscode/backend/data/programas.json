@@ -1,0 +1,408 @@
+[
+  {
+    "id": 1,
+    "nombre": "Pensión para el Bienestar de las Personas Adultas Mayores",
+    "descripcion": "Programa federal dirigido a personas adultas mayores de 65 años en México para apoyar su ingreso y bienestar. Entrega apoyo económico bimestral sin necesidad de haber cotizado ante el IMSS o ISSSTE.",
+    "monto": "$6,000 MXN",
+    "periodicidad": "bimestral",
+    "dependencia": "Secretaría de Bienestar",
+    "url_oficial": "https://www.gob.mx/bienestar",
+    "telefono_informes": "800-639-4264",
+    "oficina_tramite": "Oficinas de Bienestar en tu municipio o Módulos de Atención",
+    "requisitos_elegibilidad": {
+      "edad_minima": 65,
+      "edad_maxima": null,
+      "tiene_hijos": null,
+      "nivel_ingreso": "sin restriccion",
+      "municipios_rurales": false
+    },
+    "documentos_requeridos": [
+      {
+        "id": 1,
+        "nombre": "Identificación oficial vigente (INE/IFE)",
+        "tipo": "identidad",
+        "descripcion": "Credencial para votar vigente"
+      },
+      {
+        "id": 2,
+        "nombre": "CURP",
+        "tipo": "identidad",
+        "descripcion": "Clave Única de Registro de Población"
+      },
+      {
+        "id": 3,
+        "nombre": "Comprobante de domicilio",
+        "tipo": "domicilio",
+        "descripcion": "No mayor a 3 meses (luz, agua, teléfono, predial)"
+      },
+      {
+        "id": 4,
+        "nombre": "Acta de nacimiento",
+        "tipo": "identidad",
+        "descripcion": "Original o copia certificada"
+      },
+      {
+        "id": 5,
+        "nombre": "Estado de cuenta bancario o CLABE interbancaria",
+        "tipo": "bancario",
+        "descripcion": "Para depósito del apoyo"
+      }
+    ],
+    "pasos_tramite": [
+      "Acude a la oficina de Bienestar más cercana con tus documentos",
+      "Llena el formato de registro que te proporcionarán",
+      "Entrega tus documentos originales y copias",
+      "Espera la validación de tu información (2-4 semanas)",
+      "Recibirás una tarjeta bancaria donde se depositará tu apoyo",
+      "El primer pago llegará en el siguiente bimestre"
+    ],
+    "modalidad": "presencial",
+    "permite_envio_virtual": false,
+    "emite_constancia": false,
+    "tags": ["pension", "adultos mayores", "bienestar", "apoyo economico"],
+    "cobertura": "nacional",
+    "estados": [],
+    "situaciones": ["nuevo", "renovacion"]
+  },
+  {
+    "id": 2,
+    "nombre": "Beca Benito Juárez (nivel medio superior)",
+    "descripcion": "Apoyo económico para estudiantes inscritos en instituciones públicas de educación media superior (preparatoria, bachillerato, profesional técnico) para reducir el abandono escolar y apoyar la economía familiar.",
+    "monto": "$1,840 MXN",
+    "periodicidad": "bimestral",
+    "dependencia": "Coordinación Nacional de Becas para el Bienestar Benito Juárez",
+    "url_oficial": "https://www.gob.mx/becasbenitojuarez",
+    "telefono_informes": "800-624-9996",
+    "oficina_tramite": "Registro en línea en becasbenitojuarez.gob.mx",
+    "requisitos_elegibilidad": {
+      "edad_minima": null,
+      "edad_maxima": null,
+      "tiene_hijos": null,
+      "nivel_ingreso": "bajo",
+      "municipios_rurales": false
+    },
+    "documentos_requeridos": [
+      {
+        "id": 1,
+        "nombre": "CURP del estudiante",
+        "tipo": "identidad",
+        "descripcion": "Clave Única de Registro de Población del estudiante"
+      },
+      {
+        "id": 2,
+        "nombre": "Comprobante de inscripción o constancia escolar",
+        "tipo": "academico",
+        "descripcion": "Documento que acredite estar inscrito en nivel medio superior"
+      },
+      {
+        "id": 3,
+        "nombre": "Identificación oficial del padre/madre/tutor",
+        "tipo": "identidad",
+        "descripcion": "INE o IFE del responsable"
+      },
+      {
+        "id": 4,
+        "nombre": "Comprobante de domicilio",
+        "tipo": "domicilio",
+        "descripcion": "No mayor a 3 meses"
+      },
+      {
+        "id": 5,
+        "nombre": "Formato de registro",
+        "tipo": "tramite",
+        "descripcion": "Se descarga del portal oficial"
+      }
+    ],
+    "pasos_tramite": [
+      "Ingresa al portal oficial: becasbenitojuarez.gob.mx",
+      "Registra tus datos personales y escolares",
+      "Sube los documentos digitalizados (PDF o imagen)",
+      "Imprime tu comprobante de registro",
+      "Espera la validación (4-6 semanas)",
+      "Recibirás notificación por correo electrónico",
+      "El apoyo se deposita en tarjeta bancaria"
+    ],
+    "modalidad": "en_linea",
+    "permite_envio_virtual": true,
+    "emite_constancia": true,
+    "tags": ["beca", "estudiantes", "preparatoria", "educacion"],
+    "cobertura": "nacional",
+    "estados": [],
+    "situaciones": ["nuevo", "continuidad"]
+  },
+  {
+    "id": 3,
+    "nombre": "Sembrando Vida",
+    "descripcion": "Programa orientado a personas que habitan en localidades rurales y cuentan con 2.5 hectáreas disponibles para impulsar cultivos, sistemas agroforestales y reforestación con apoyo económico mensual y acompañamiento técnico durante 5 años.",
+    "monto": "$6,250 MXN",
+    "periodicidad": "mensual",
+    "dependencia": "Secretaría de Bienestar",
+    "url_oficial": "https://www.gob.mx/bienestar/acciones-y-programas/sembrando-vida",
+    "telefono_informes": "800-900-2000",
+    "oficina_tramite": "Oficinas regionales de Sembrando Vida",
+    "requisitos_elegibilidad": {
+      "edad_minima": 18,
+      "edad_maxima": null,
+      "tiene_hijos": null,
+      "nivel_ingreso": "bajo",
+      "municipios_rurales": true
+    },
+    "documentos_requeridos": [
+      {
+        "id": 1,
+        "nombre": "Identificación oficial vigente",
+        "tipo": "identidad",
+        "descripcion": "INE o IFE vigente"
+      },
+      {
+        "id": 2,
+        "nombre": "CURP",
+        "tipo": "identidad",
+        "descripcion": "Clave Única de Registro de Población"
+      },
+      {
+        "id": 3,
+        "nombre": "Comprobante de domicilio",
+        "tipo": "domicilio",
+        "descripcion": "No mayor a 3 meses"
+      },
+      {
+        "id": 4,
+        "nombre": "Documentos que acrediten la propiedad o posesión de la tierra",
+        "tipo": "propiedad",
+        "descripcion": "Escrituras, certificado parcelario, constancia de posesión"
+      },
+      {
+        "id": 5,
+        "nombre": "Croquis de ubicación de la parcela",
+        "tipo": "propiedad",
+        "descripcion": "Ubicación geográfica del terreno"
+      },
+      {
+        "id": 6,
+        "nombre": "Formato de inscripción",
+        "tipo": "tramite",
+        "descripcion": "Se proporciona en la oficina regional"
+      }
+    ],
+    "pasos_tramite": [
+      "Verifica que tu comunidad esté en la zona de atención del programa",
+      "Acude a la oficina regional de Sembrando Vida",
+      "Presenta tus documentos y el croquis de tu parcela",
+      "Recibe capacitación sobre el programa y técnicas de siembra",
+      "Firma el convenio de participación",
+      "Inicia la siembra de árboles en tu parcela",
+      "Recibe el apoyo mensual durante 5 años"
+    ],
+    "modalidad": "mixto",
+    "permite_envio_virtual": true,
+    "emite_constancia": false,
+    "tags": ["campo", "rural", "agricultura", "reforestacion"],
+    "cobertura": "nacional",
+    "estados": [],
+    "situaciones": ["nuevo", "productivo"]
+  },
+  {
+    "id": 4,
+    "nombre": "Jóvenes Construyendo el Futuro",
+    "descripcion": "Programa de capacitación laboral para jóvenes de 18 a 29 años que no estudian ni trabajan. Ofrece beca mensual mientras se capacitan en empresas, talleres o instituciones durante 12 meses.",
+    "monto": "$7,572 MXN",
+    "periodicidad": "mensual",
+    "dependencia": "Secretaría del Trabajo y Previsión Social",
+    "url_oficial": "https://jovenesconstruyendoelfuturo.stps.gob.mx",
+    "telefono_informes": "800-841-2020",
+    "oficina_tramite": "Registro en línea",
+    "requisitos_elegibilidad": {
+      "edad_minima": 18,
+      "edad_maxima": 29,
+      "tiene_hijos": null,
+      "nivel_ingreso": "sin restriccion",
+      "municipios_rurales": false
+    },
+    "documentos_requeridos": [
+      {
+        "id": 1,
+        "nombre": "CURP",
+        "tipo": "identidad",
+        "descripcion": "Clave Única de Registro de Población"
+      },
+      {
+        "id": 2,
+        "nombre": "Comprobante de domicilio",
+        "tipo": "domicilio",
+        "descripcion": "No mayor a 3 meses"
+      },
+      {
+        "id": 3,
+        "nombre": "Último comprobante de estudios",
+        "tipo": "academico",
+        "descripcion": "Certificado o constancia del último grado cursado"
+      },
+      {
+        "id": 4,
+        "nombre": "Identificación oficial",
+        "tipo": "identidad",
+        "descripcion": "INE, pasaporte o cédula profesional"
+      },
+      {
+        "id": 5,
+        "nombre": "Número de seguridad social (NSS)",
+        "tipo": "laboral",
+        "descripcion": "Si lo tienes, de lo contrario se tramita"
+      }
+    ],
+    "pasos_tramite": [
+      "Regístrate en jovenesconstruyendoelfuturo.stps.gob.mx",
+      "Completa tu perfil con tus datos personales y académicos",
+      "Busca un centro de trabajo de tu interés",
+      "Solicita tu vinculación con el centro de trabajo",
+      "Espera la aceptación del tutor",
+      "Acude a la cita de vinculación",
+      "Inicia tu capacitación y recibe tu beca mensual"
+    ],
+    "modalidad": "en_linea",
+    "permite_envio_virtual": true,
+    "emite_constancia": true,
+    "tags": ["jovenes", "capacitacion", "empleo", "beca"],
+    "cobertura": "nacional",
+    "estados": [],
+    "situaciones": ["nuevo"]
+  },
+  {
+    "id": 5,
+    "nombre": "Apoyo para el Bienestar de las Niñas y Niños, Hijos de Madres Trabajadoras",
+    "descripcion": "Apoyo económico bimestral para madres, padres solos o tutores que trabajan, buscan empleo o estudian, y no tienen acceso a servicios de cuidado y atención infantil. Para niños de 1 a 3 años 11 meses.",
+    "monto": "$1,600 MXN",
+    "periodicidad": "bimestral",
+    "dependencia": "Secretaría de Bienestar",
+    "url_oficial": "https://www.gob.mx/bienestar",
+    "telefono_informes": "800-007-3705",
+    "oficina_tramite": "Oficinas de Bienestar o registro en línea",
+    "requisitos_elegibilidad": {
+      "edad_minima": null,
+      "edad_maxima": null,
+      "tiene_hijos": true,
+      "nivel_ingreso": "bajo",
+      "municipios_rurales": false
+    },
+    "documentos_requeridos": [
+      {
+        "id": 1,
+        "nombre": "CURP de la madre/padre/tutor",
+        "tipo": "identidad",
+        "descripcion": "Clave Única de Registro de Población del solicitante"
+      },
+      {
+        "id": 2,
+        "nombre": "CURP del niño o niña",
+        "tipo": "identidad",
+        "descripcion": "Clave Única de Registro de Población del menor"
+      },
+      {
+        "id": 3,
+        "nombre": "Acta de nacimiento del niño o niña",
+        "tipo": "identidad",
+        "descripcion": "Original o copia certificada"
+      },
+      {
+        "id": 4,
+        "nombre": "Comprobante de domicilio",
+        "tipo": "domicilio",
+        "descripcion": "No mayor a 3 meses"
+      },
+      {
+        "id": 5,
+        "nombre": "Identificación oficial del solicitante",
+        "tipo": "identidad",
+        "descripcion": "INE o IFE vigente"
+      },
+      {
+        "id": 6,
+        "nombre": "Comprobante de trabajo, búsqueda de empleo o estudios",
+        "tipo": "laboral",
+        "descripcion": "Constancia laboral, carta de búsqueda de empleo o constancia de estudios"
+      }
+    ],
+    "pasos_tramite": [
+      "Verifica que tu hijo o hija tenga entre 1 y 3 años 11 meses",
+      "Reúne todos los documentos requeridos",
+      "Acude a la oficina de Bienestar o regístrate en línea",
+      "Llena el formato de solicitud",
+      "Entrega tus documentos",
+      "Espera la validación (4-6 semanas)",
+      "Recibe tu tarjeta bancaria para el depósito bimestral"
+    ],
+    "modalidad": "mixto",
+    "permite_envio_virtual": true,
+    "emite_constancia": false,
+    "tags": ["madres trabajadoras", "ninos", "cuidado infantil", "apoyo economico"],
+    "cobertura": "nacional",
+    "estados": [],
+    "situaciones": ["nuevo", "renovacion"]
+  },
+  {
+    "id": 6,
+    "nombre": "Seguro de Vida para Jefas de Familia",
+    "descripcion": "Seguro de vida gratuito para mujeres jefas de familia de 18 a 68 años. En caso de fallecimiento, sus hijos menores de edad recibirán apoyo económico mensual hasta cumplir 23 años si estudian.",
+    "monto": "$1,200 MXN mensuales por hijo",
+    "periodicidad": "mensual (en caso de fallecimiento)",
+    "dependencia": "Secretaría de Bienestar",
+    "url_oficial": "https://www.gob.mx/bienestar",
+    "telefono_informes": "800-007-3705",
+    "oficina_tramite": "Oficinas de Bienestar",
+    "requisitos_elegibilidad": {
+      "edad_minima": 18,
+      "edad_maxima": 68,
+      "tiene_hijos": true,
+      "nivel_ingreso": "sin restriccion",
+      "municipios_rurales": false
+    },
+    "documentos_requeridos": [
+      {
+        "id": 1,
+        "nombre": "CURP de la jefa de familia",
+        "tipo": "identidad",
+        "descripcion": "Clave Única de Registro de Población"
+      },
+      {
+        "id": 2,
+        "nombre": "Identificación oficial",
+        "tipo": "identidad",
+        "descripcion": "INE o IFE vigente"
+      },
+      {
+        "id": 3,
+        "nombre": "Actas de nacimiento de los hijos menores",
+        "tipo": "identidad",
+        "descripcion": "De todos los hijos menores de edad"
+      },
+      {
+        "id": 4,
+        "nombre": "Comprobante de domicilio",
+        "tipo": "domicilio",
+        "descripcion": "No mayor a 3 meses"
+      },
+      {
+        "id": 5,
+        "nombre": "Formato de inscripción",
+        "tipo": "tramite",
+        "descripcion": "Se proporciona en la oficina"
+      }
+    ],
+    "pasos_tramite": [
+      "Acude a la oficina de Bienestar más cercana",
+      "Solicita el formato de inscripción al Seguro de Vida",
+      "Llena el formato con tus datos y los de tus hijos",
+      "Entrega los documentos requeridos",
+      "Recibe tu comprobante de inscripción",
+      "El seguro queda activo de inmediato sin costo"
+    ],
+    "modalidad": "presencial",
+    "permite_envio_virtual": false,
+    "emite_constancia": true,
+    "tags": ["seguro de vida", "jefas de familia", "proteccion", "hijos"],
+    "cobertura": "nacional",
+    "estados": [],
+    "situaciones": ["nuevo"]
+  }
+]
