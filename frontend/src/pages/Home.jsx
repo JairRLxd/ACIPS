@@ -62,6 +62,19 @@ export default function Home() {
               </Link>
               
               <Link
+                to="/programas"
+                className="group inline-flex items-center gap-3 bg-white border-2 px-8 py-4 rounded-full text-lg font-bold hover:shadow-xl hover:scale-105 transition-all duration-300"
+                style={{ color: '#410016', borderColor: '#410016' }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#fff5f7'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
+              >
+                <svg className="w-6 h-6 group-hover:rotate-6 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0l-4-4m4 4l-4 4M5 19h14M5 5h14" />
+                </svg>
+                Ver todos los programas
+              </Link>
+
+              <Link
                 to="/chat"
                 className="group inline-flex items-center gap-3 bg-white border-2 px-8 py-4 rounded-full text-lg font-bold hover:shadow-xl hover:scale-105 transition-all duration-300"
                 style={{ color: '#410016', borderColor: '#410016' }}
@@ -156,7 +169,7 @@ export default function Home() {
             <ProgramCard
               programaId="1"
               title="Pensión para Adultos Mayores"
-              monto="$3,100"
+              monto="$6,000"
               periodo="bimestrales"
               descripcion="Para personas de 65 años o más"
               color="from-blue-500 to-blue-600"
@@ -165,20 +178,20 @@ export default function Home() {
               image="/images/pension-adultos.png"
             />
             <ProgramCard
-              programaId="2"
-              title="Beca Benito Juárez"
-              monto="$840"
+              programaId="12"
+              title="Becas Benito Juárez"
+              monto="$1,840"
               periodo="bimestrales"
-              descripcion="Para estudiantes de educación básica"
+              descripcion="Para estudiantes de media superior"
               color="from-purple-500 to-purple-600"
               iconBg="bg-purple-100"
               iconColor="text-purple-600"
               image="/images/beca-benito.png"
             />
             <ProgramCard
-              programaId="3"
+              programaId="4"
               title="Sembrando Vida"
-              monto="$5,000"
+              monto="$6,250"
               periodo="mensuales"
               descripcion="Para productores rurales con tierra"
               color="from-green-500 to-green-600"
@@ -187,7 +200,7 @@ export default function Home() {
               image="/images/sembrando-vida.png"
             />
             <ProgramCard
-              programaId="4"
+              programaId="13"
               title="Jóvenes Construyendo el Futuro"
               monto="$6,310"
               periodo="mensuales"
@@ -198,11 +211,11 @@ export default function Home() {
               image="/images/jovenes-futuro.png"
             />
             <ProgramCard
-              programaId="5"
-              title="Seguro de Vida para Jefas de Familia"
-              monto="$124,000"
-              periodo="seguro"
-              descripcion="Para mujeres jefas de familia"
+              programaId="15"
+              title="Apoyo a Madres Solas"
+              monto="Variable"
+              periodo="bimestrales"
+              descripcion="Para mujeres jefas de hogar con hijos"
               color="from-pink-500 to-pink-600"
               iconBg="bg-pink-100"
               iconColor="text-pink-600"
@@ -213,7 +226,7 @@ export default function Home() {
             <ProgramCard
               programaId="1"
               title="Pensión para Adultos Mayores"
-              monto="$3,100"
+              monto="$6,000"
               periodo="bimestrales"
               descripcion="Para personas de 65 años o más"
               color="from-blue-500 to-blue-600"
@@ -222,20 +235,20 @@ export default function Home() {
               image="/images/pension-adultos.png"
             />
             <ProgramCard
-              programaId="2"
-              title="Beca Benito Juárez"
-              monto="$840"
+              programaId="12"
+              title="Becas Benito Juárez"
+              monto="$1,840"
               periodo="bimestrales"
-              descripcion="Para estudiantes de educación básica"
+              descripcion="Para estudiantes de media superior"
               color="from-purple-500 to-purple-600"
               iconBg="bg-purple-100"
               iconColor="text-purple-600"
               image="/images/beca-benito.png"
             />
             <ProgramCard
-              programaId="3"
+              programaId="4"
               title="Sembrando Vida"
-              monto="$5,000"
+              monto="$6,250"
               periodo="mensuales"
               descripcion="Para productores rurales con tierra"
               color="from-green-500 to-green-600"
@@ -373,7 +386,7 @@ export default function Home() {
           {/* Estadísticas mejoradas */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 max-w-4xl mx-auto">
             <div className="bg-gradient-to-br from-rose-50 to-pink-50 rounded-2xl p-6 border border-rose-100">
-              <div className="text-5xl font-black mb-2" style={{ color: '#410016' }}>5+</div>
+              <div className="text-5xl font-black mb-2" style={{ color: '#410016' }}>15+</div>
               <div className="text-gray-600 font-semibold">Programas Disponibles</div>
             </div>
             <div className="bg-gradient-to-br from-rose-50 to-pink-50 rounded-2xl p-6 border border-rose-100">
@@ -529,7 +542,7 @@ function ProgramCard({ title, monto, periodo, descripcion, color, iconBg, iconCo
   
   const handleVerDetalles = () => {
     // Redirigir a la página de trámite del programa específico
-    navigate(`/tramite/${programaId}`)
+    navigate(`/tramites/${programaId}`)
   }
 
   return (

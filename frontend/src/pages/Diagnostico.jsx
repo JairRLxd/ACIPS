@@ -1,25 +1,283 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
-import { enviarDiagnostico } from '../repositories/chatRepository'
+import { evaluarElegibilidad } from '../repositories/elegibilidadRepository'
+
+const FIXED_QUESTIONS = [
+  {
+    number: 1,
+    field: 'edad',
+    label: '¿Cuántos años tienes?',
+    help: 'Esta información nos ayuda a identificar programas según tu edad.',
+    type: 'number',
+    min: 0,
+    placeholder: 'Ejemplo: 22',
+  },
+  {
+    number: 2,
+    field: 'sexo',
+    label: '¿Cuál es tu sexo?',
+    help: 'Algunos apoyos tienen criterios específicos por sexo.',
+    type: 'choice',
+    options: [
+      { value: 'M', label: 'Masculino' },
+      { value: 'F', label: 'Femenino' },
+    ],
+  },
+  {
+    number: 3,
+    field: 'zona_rural',
+    label: '¿Vives en zona rural?',
+    help: 'Esto activa programas pensados para comunidades rurales.',
+    type: 'boolean',
+  },
+  {
+    number: 4,
+    field: 'tiene_seguridad_social',
+    label: '¿Tienes seguridad social (IMSS/ISSSTE)?',
+    help: 'Nos ayuda a distinguir apoyos complementarios o sustitutivos.',
+    type: 'boolean',
+  },
+  {
+    number: 5,
+    field: 'nivel_ingreso',
+    label: '¿Cuál es tu nivel de ingreso mensual?',
+    help: 'Esto determina tu elegibilidad para ciertos programas.',
+    type: 'choice',
+    options: [
+      { value: 'sin_ingreso', label: 'Sin ingreso' },
+      { value: 'muy_bajo', label: 'Muy bajo' },
+      { value: 'bajo', label: 'Bajo' },
+      { value: 'medio', label: 'Medio' },
+      { value: 'alto', label: 'Alto' },
+    ],
+  },
+  {
+    number: 6,
+    field: 'tiene_discapacidad',
+    label: '¿Tienes alguna discapacidad?',
+    help: 'Hay apoyos especiales para personas con discapacidad.',
+    type: 'boolean',
+  },
+  {
+    number: 7,
+    field: 'estudia_actualmente',
+    label: '¿Estudias actualmente?',
+    help: 'Existen becas y apoyos específicos para estudiantes.',
+    type: 'boolean',
+  },
+  {
+    number: 8,
+    field: 'situacion_laboral',
+    label: '¿Cuál es tu situación laboral?',
+    help: 'Esto ayuda a evaluar programas de empleo y apoyo económico.',
+    type: 'choice',
+    options: [
+      { value: 'empleado_formal', label: 'Empleado formal' },
+      { value: 'empleado_informal', label: 'Empleado informal' },
+      { value: 'desempleado', label: 'Desempleado' },
+      { value: 'independiente', label: 'Independiente' },
+    ],
+  },
+  {
+    number: 9,
+    field: 'hijos_menores_18',
+    label: '¿Cuántos hijos menores de 18 años tienes?',
+    help: 'Nos permite identificar apoyos familiares y de crianza.',
+    type: 'number',
+    min: 0,
+    placeholder: 'Ejemplo: 0',
+  },
+  {
+    number: 10,
+    field: 'vivienda_precaria',
+    label: '¿Tu vivienda es precaria o de autoconstrucción?',
+    help: 'Esto activa programas de vivienda y mejoramiento.',
+    type: 'boolean',
+  },
+]
+
+const CONDITIONAL_QUESTIONS = [
+  {
+    number: 'C1',
+    field: 'nivel_educativo',
+    label: '¿Qué nivel educativo cursas actualmente?',
+    help: 'Solo se solicita si actualmente estudias.',
+    type: 'choice',
+    condition: (data) => data.estudia_actualmente === true,
+    options: [
+      { value: 'primaria', label: 'Primaria' },
+      { value: 'secundaria', label: 'Secundaria' },
+      { value: 'media_superior', label: 'Media superior' },
+      { value: 'superior', label: 'Superior' },
+    ],
+  },
+  {
+    number: 'C2',
+    field: 'tiene_tierra_agricola',
+    label: '¿Tienes tierra agrícola?',
+    help: 'Solo aplica para personas que viven en zona rural.',
+    type: 'boolean',
+    condition: (data) => data.zona_rural === true,
+  },
+  {
+    number: 'C3',
+    field: 'produce_maiz_frijol',
+    label: '¿Produces maíz o frijol?',
+    help: 'Solo aplica para personas que viven en zona rural.',
+    type: 'boolean',
+    condition: (data) => data.zona_rural === true,
+  },
+  {
+    number: 'C4',
+    field: 'tiene_hijo_menor_6',
+    label: '¿Tienes algún hijo menor de 6 años?',
+    help: 'Solo se solicita si tienes hijos menores de 18 años.',
+    type: 'boolean',
+    condition: (data) => Number(data.hijos_menores_18) > 0,
+  },
+  {
+    number: 'C5',
+    field: 'es_jefa_hogar',
+    label: '¿Eres jefa de hogar o el único sustento del hogar?',
+    help: 'Solo aplica para mujeres con hijos menores de 18 años.',
+    type: 'boolean',
+    condition: (data) => data.sexo === 'F' && Number(data.hijos_menores_18) > 0,
+  },
+  {
+    number: 'C6',
+    field: 'recibio_subsidio_vivienda',
+    label: '¿Has recibido antes un subsidio de vivienda?',
+    help: 'Solo se solicita si tu vivienda es precaria o de autoconstrucción.',
+    type: 'boolean',
+    condition: (data) => data.vivienda_precaria === true,
+  },
+  {
+    number: 'C7',
+    field: 'tiene_micronegocio',
+    label: '¿Tienes un micronegocio o actividad propia?',
+    help: 'Ayuda a evaluar apoyos productivos o de autoempleo.',
+    type: 'boolean',
+    condition: (data) => ['empleado_informal', 'independiente'].includes(data.situacion_laboral),
+  },
+]
+
+const INITIAL_FORM_DATA = {
+  edad: '',
+  sexo: '',
+  zona_rural: null,
+  tiene_seguridad_social: null,
+  nivel_ingreso: '',
+  tiene_discapacidad: null,
+  estudia_actualmente: null,
+  situacion_laboral: '',
+  hijos_menores_18: '',
+  vivienda_precaria: null,
+  nivel_educativo: '',
+  tiene_tierra_agricola: false,
+  produce_maiz_frijol: false,
+  tiene_hijo_menor_6: false,
+  es_jefa_hogar: false,
+  recibio_subsidio_vivienda: false,
+  tiene_micronegocio: false,
+}
+
+const PROFILE_LABELS = {
+  edad: 'Edad',
+  sexo: 'Sexo',
+  zona_rural: 'Zona rural',
+  tiene_seguridad_social: 'Seguridad social',
+  nivel_ingreso: 'Ingreso mensual',
+  tiene_discapacidad: 'Discapacidad',
+  estudia_actualmente: 'Estudia actualmente',
+  situacion_laboral: 'Situación laboral',
+  hijos_menores_18: 'Hijos menores de 18',
+  vivienda_precaria: 'Vivienda precaria',
+  nivel_educativo: 'Nivel educativo',
+  tiene_tierra_agricola: 'Tierra agrícola',
+  produce_maiz_frijol: 'Produce maíz o frijol',
+  tiene_hijo_menor_6: 'Hijo menor de 6 años',
+  es_jefa_hogar: 'Jefa de hogar',
+  recibio_subsidio_vivienda: 'Subsidio de vivienda previo',
+  tiene_micronegocio: 'Micronegocio',
+}
+
+function pruneConditionalAnswers(data) {
+  const nextData = { ...data }
+
+  if (nextData.estudia_actualmente !== true) nextData.nivel_educativo = ''
+  if (nextData.zona_rural !== true) {
+    nextData.tiene_tierra_agricola = false
+    nextData.produce_maiz_frijol = false
+  }
+  if (!(Number(nextData.hijos_menores_18) > 0)) {
+    nextData.tiene_hijo_menor_6 = false
+  }
+  if (!(nextData.sexo === 'F' && Number(nextData.hijos_menores_18) > 0)) {
+    nextData.es_jefa_hogar = false
+  }
+  if (nextData.vivienda_precaria !== true) nextData.recibio_subsidio_vivienda = false
+  if (!['empleado_informal', 'independiente'].includes(nextData.situacion_laboral)) {
+    nextData.tiene_micronegocio = false
+  }
+
+  return nextData
+}
+
+function isAnswered(question, value) {
+  if (question.type === 'number') return value !== '' && value !== null
+  return value !== '' && value !== null
+}
+
+function buildPayload(data) {
+  return {
+    edad: Number(data.edad),
+    sexo: data.sexo,
+    zona_rural: data.zona_rural,
+    tiene_seguridad_social: data.tiene_seguridad_social,
+    nivel_ingreso: data.nivel_ingreso,
+    tiene_discapacidad: data.tiene_discapacidad,
+    estudia_actualmente: data.estudia_actualmente,
+    situacion_laboral: data.situacion_laboral,
+    hijos_menores_18: Number(data.hijos_menores_18),
+    vivienda_precaria: data.vivienda_precaria,
+    nivel_educativo: data.nivel_educativo,
+    tiene_tierra_agricola: data.tiene_tierra_agricola,
+    produce_maiz_frijol: data.produce_maiz_frijol,
+    tiene_hijo_menor_6: data.tiene_hijo_menor_6,
+    es_jefa_hogar: data.es_jefa_hogar,
+    recibio_subsidio_vivienda: data.recibio_subsidio_vivienda,
+    tiene_micronegocio: data.tiene_micronegocio,
+  }
+}
+
+function formatBooleanLabel(value) {
+  return value ? 'Sí' : 'No'
+}
 
 export default function Diagnostico() {
   const navigate = useNavigate()
   const { setPerfilUsuario, setResultados } = useApp()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [formData, setFormData] = useState(INITIAL_FORM_DATA)
 
-  const [formData, setFormData] = useState({
-    edad: '',
-    municipio: '',
-    tiene_hijos: null,
-    nivel_ingresos: '',
-    estudia: null,
-    tiene_discapacidad: null,
-  })
+  const visibleConditionalQuestions = useMemo(
+    () => CONDITIONAL_QUESTIONS.filter((question) => question.condition(formData)),
+    [formData]
+  )
+
+  const fixedAnswered = FIXED_QUESTIONS.filter((question) =>
+    isAnswered(question, formData[question.field])
+  ).length
+  const conditionalAnswered = visibleConditionalQuestions.filter((question) =>
+    isAnswered(question, formData[question.field])
+  ).length
+  const totalVisibleQuestions = FIXED_QUESTIONS.length + visibleConditionalQuestions.length
+  const totalAnsweredQuestions = fixedAnswered + conditionalAnswered
 
   const handleChange = (field, value) => {
-    setFormData({ ...formData, [field]: value })
+    setFormData((current) => pruneConditionalAnswers({ ...current, [field]: value }))
     setError(null)
   }
 
@@ -27,44 +285,32 @@ export default function Diagnostico() {
     e.preventDefault()
     setError(null)
 
-    // Validar campos
-    if (!formData.edad || !formData.municipio || formData.tiene_hijos === null ||
-        !formData.nivel_ingresos || formData.estudia === null || formData.tiene_discapacidad === null) {
-      setError('Por favor completa todas las preguntas')
+    const missingFixed = FIXED_QUESTIONS.some((question) => !isAnswered(question, formData[question.field]))
+    const missingConditional = visibleConditionalQuestions.some((question) => !isAnswered(question, formData[question.field]))
+
+    if (missingFixed || missingConditional) {
+      setError('Por favor completa todas las preguntas visibles antes de continuar.')
       return
     }
 
     setLoading(true)
 
     try {
-      const perfil = {
-        edad: parseInt(formData.edad),
-        municipio: formData.municipio,
-        tiene_hijos: formData.tiene_hijos,
-        nivel_ingresos: formData.nivel_ingresos,
-        estudia: formData.estudia,
-        tiene_discapacidad: formData.tiene_discapacidad,
-      }
-
-      const response = await enviarDiagnostico(perfil)
+      const payload = buildPayload(formData)
+      const response = await evaluarElegibilidad(payload)
 
       if (response.data) {
-        setPerfilUsuario(perfil)
-        
-        // El backend ahora devuelve la respuesta del chatbot
-        // Extraer programas elegibles de la respuesta
-        const respuesta = response.data.respuesta || response.data.mensaje || ''
-        
-        // Guardar la respuesta completa como resultados
-        setResultados({
-          mensaje: respuesta,
-          perfil: perfil,
-          timestamp: new Date().toISOString()
+        setPerfilUsuario({
+          ...payload,
+          _visibleFields: [
+            ...FIXED_QUESTIONS.map((question) => question.field),
+            ...visibleConditionalQuestions.map((question) => question.field),
+          ],
         })
-        
+        setResultados(response.data)
         navigate('/resultados')
       } else {
-        setError('Error al procesar diagnóstico')
+        setError('No se pudo procesar el diagnóstico.')
       }
     } catch (err) {
       console.error('Error:', err)
@@ -78,11 +324,12 @@ export default function Diagnostico() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-pink-50 py-20 px-4">
       <div className="container mx-auto max-w-5xl">
-        {/* Header mejorado */}
         <div className="text-center mb-12 animate-fade-in-up">
           <div className="inline-block mb-6">
-            <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 shadow-xl"
-            style={{ background: 'linear-gradient(135deg, #410016, #7a0028)' }}>
+            <div
+              className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 shadow-xl"
+              style={{ background: 'linear-gradient(135deg, #410016, #7a0028)' }}
+            >
               <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
               </svg>
@@ -92,299 +339,188 @@ export default function Diagnostico() {
             Diagnóstico de Elegibilidad
           </h1>
           <p className="text-xl md:text-2xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-            Responde estas <span className="font-bold" style={{ color: '#410016' }}>6 preguntas</span> para descubrir qué apoyos te corresponden
+            Responde el diagnóstico guiado para descubrir qué apoyos te corresponden
           </p>
-          
-          {/* Barra de progreso */}
+
           <div className="mt-8 max-w-md mx-auto">
             <div className="flex justify-between text-sm text-gray-500 mb-2">
               <span>Progreso</span>
-              <span>{Object.values(formData).filter(v => v !== '' && v !== null).length}/6</span>
+              <span>{totalAnsweredQuestions}/{totalVisibleQuestions}</span>
             </div>
             <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
-              <div 
+              <div
                 className="h-full transition-all duration-500 rounded-full"
-                style={{ 
-                  width: `${(Object.values(formData).filter(v => v !== '' && v !== null).length / 6) * 100}%`,
-                  background: 'linear-gradient(to right, #410016, #7a0028)'
+                style={{
+                  width: `${totalVisibleQuestions > 0 ? (totalAnsweredQuestions / totalVisibleQuestions) * 100 : 0}%`,
+                  background: 'linear-gradient(to right, #410016, #7a0028)',
                 }}
-              ></div>
+              />
             </div>
           </div>
         </div>
 
-        {/* Formulario mejorado */}
         <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-8 md:p-12 border border-white">
           <form onSubmit={handleSubmit} className="space-y-10">
-          {/* Pregunta 1: Edad */}
-          <div className="group animate-fade-in-up animation-delay-100">
-            <div className="flex items-start gap-4 mb-4">
-              <div className="flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center text-white font-black text-xl shadow-lg"
-              style={{ background: 'linear-gradient(135deg, #410016, #7a0028)' }}>
-                1
-              </div>
-              <div className="flex-1">
-                <label className="block text-2xl font-bold text-gray-900 mb-2">
-                  ¿Cuántos años tienes?
-                </label>
-                <p className="text-gray-500 text-sm">Esta información nos ayuda a identificar programas según tu edad</p>
-              </div>
+            <div className="space-y-10">
+              {FIXED_QUESTIONS.map((question) => (
+                <QuestionCard
+                  key={question.field}
+                  question={question}
+                  value={formData[question.field]}
+                  onChange={handleChange}
+                />
+              ))}
             </div>
-            <input
-              type="number"
-              min="0"
-              max="120"
-              value={formData.edad}
-              onChange={(e) => handleChange('edad', e.target.value)}
-              className="w-full px-6 py-4 text-lg border-2 border-gray-200 rounded-2xl focus:border-[#410016] focus:outline-none transition-all duration-300 hover:border-gray-300"
-              placeholder="Ejemplo: 35"
-              required
-            />
-          </div>
 
-          {/* Pregunta 2: Municipio */}
-          <div className="group animate-fade-in-up animation-delay-200">
-            <div className="flex items-start gap-4 mb-4">
-              <div className="flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center text-white font-black text-xl shadow-lg"
-              style={{ background: 'linear-gradient(135deg, #410016, #7a0028)' }}>
-                2
-              </div>
-              <div className="flex-1">
-                <label className="block text-2xl font-bold text-gray-900 mb-2">
-                  ¿En qué municipio vives?
-                </label>
-                <p className="text-gray-500 text-sm">Algunos programas varían según tu ubicación</p>
-              </div>
-            </div>
-            <input
-              type="text"
-              value={formData.municipio}
-              onChange={(e) => handleChange('municipio', e.target.value)}
-              className="w-full px-6 py-4 text-lg border-2 border-gray-200 rounded-2xl focus:border-[#410016] focus:outline-none transition-all duration-300 hover:border-gray-300"
-              placeholder="Ejemplo: Guadalajara"
-              required
-            />
-          </div>
+            {visibleConditionalQuestions.length > 0 && (
+              <div className="rounded-3xl border border-rose-100 bg-rose-50/60 p-6 md:p-8">
+                <div className="mb-8">
+                  <p className="text-sm font-bold uppercase tracking-[0.25em] text-[#7a0028] mb-2">
+                    Preguntas adicionales
+                  </p>
+                  <h2 className="text-3xl font-black text-gray-900 mb-2">
+                    Ajustamos el diagnóstico a tu perfil
+                  </h2>
+                  <p className="text-gray-600">
+                    Estas preguntas solo aparecen cuando aplican a tu situación.
+                  </p>
+                </div>
 
-          {/* Pregunta 3: Hijos */}
-          <div className="group animate-fade-in-up animation-delay-300">
-            <div className="flex items-start gap-4 mb-4">
-              <div className="flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center text-white font-black text-xl shadow-lg"
-              style={{ background: 'linear-gradient(135deg, #410016, #7a0028)' }}>
-                3
+                <div className="space-y-10">
+                  {visibleConditionalQuestions.map((question) => (
+                    <QuestionCard
+                      key={question.field}
+                      question={question}
+                      value={formData[question.field]}
+                      onChange={handleChange}
+                    />
+                  ))}
+                </div>
               </div>
-              <div className="flex-1">
-                <label className="block text-2xl font-bold text-gray-900 mb-2">
-                  ¿Tienes hijos menores de 23 años?
-                </label>
-                <p className="text-gray-500 text-sm">Hay apoyos especiales para familias con hijos</p>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <button
-                type="button"
-                onClick={() => handleChange('tiene_hijos', true)}
-                className={`py-5 px-6 text-lg font-bold rounded-2xl border-2 transition-all duration-300 ${
-                  formData.tiene_hijos === true
-                    ? 'text-white border-[#410016] shadow-lg scale-105'
-                    : 'bg-white text-gray-700 border-gray-200 hover:border-[#410016] hover:scale-105'
-                }`}
-                style={formData.tiene_hijos === true ? { background: 'linear-gradient(135deg, #410016, #7a0028)' } : {}}
-              >
-                <svg className="w-6 h-6 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                Sí, tengo hijos
-              </button>
-              <button
-                type="button"
-                onClick={() => handleChange('tiene_hijos', false)}
-                className={`py-5 px-6 text-lg font-bold rounded-2xl border-2 transition-all duration-300 ${
-                  formData.tiene_hijos === false
-                    ? 'text-white border-[#410016] shadow-lg scale-105'
-                    : 'bg-white text-gray-700 border-gray-200 hover:border-[#410016] hover:scale-105'
-                }`}
-                style={formData.tiene_hijos === false ? { background: 'linear-gradient(135deg, #410016, #7a0028)' } : {}}
-              >
-                <svg className="w-6 h-6 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-                No tengo hijos
-              </button>
-            </div>
-          </div>
-
-          {/* Pregunta 4: Ingresos */}
-          <div className="group animate-fade-in-up animation-delay-400">
-            <div className="flex items-start gap-4 mb-4">
-              <div className="flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center text-white font-black text-xl shadow-lg"
-              style={{ background: 'linear-gradient(135deg, #410016, #7a0028)' }}>
-                4
-              </div>
-              <div className="flex-1">
-                <label className="block text-2xl font-bold text-gray-900 mb-2">
-                  ¿Cuál es tu nivel de ingresos mensuales?
-                </label>
-                <p className="text-gray-500 text-sm">Esto determina tu elegibilidad para ciertos programas</p>
-              </div>
-            </div>
-            <select
-              value={formData.nivel_ingresos}
-              onChange={(e) => handleChange('nivel_ingresos', e.target.value)}
-              className="w-full px-6 py-4 text-lg border-2 border-gray-200 rounded-2xl focus:border-[#410016] focus:outline-none transition-all duration-300 hover:border-gray-300 bg-white"
-              required
-            >
-              <option value="">Selecciona una opción</option>
-              <option value="bajo">Menos de $3,000 al mes</option>
-              <option value="medio-bajo">Entre $3,000 y $8,000 al mes</option>
-              <option value="medio">Más de $8,000 al mes</option>
-            </select>
-          </div>
-
-          {/* Pregunta 5: Estudia */}
-          <div className="group animate-fade-in-up animation-delay-500">
-            <div className="flex items-start gap-4 mb-4">
-              <div className="flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center text-white font-black text-xl shadow-lg"
-              style={{ background: 'linear-gradient(135deg, #410016, #7a0028)' }}>
-                5
-              </div>
-              <div className="flex-1">
-                <label className="block text-2xl font-bold text-gray-900 mb-2">
-                  ¿Estás estudiando actualmente?
-                </label>
-                <p className="text-gray-500 text-sm">Existen becas y apoyos para estudiantes</p>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <button
-                type="button"
-                onClick={() => handleChange('estudia', true)}
-                className={`py-5 px-6 text-lg font-bold rounded-2xl border-2 transition-all duration-300 ${
-                  formData.estudia === true
-                    ? 'text-white border-[#410016] shadow-lg scale-105'
-                    : 'bg-white text-gray-700 border-gray-200 hover:border-[#410016] hover:scale-105'
-                }`}
-                style={formData.estudia === true ? { background: 'linear-gradient(135deg, #410016, #7a0028)' } : {}}
-              >
-                <svg className="w-6 h-6 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                Sí, estudio
-              </button>
-              <button
-                type="button"
-                onClick={() => handleChange('estudia', false)}
-                className={`py-5 px-6 text-lg font-bold rounded-2xl border-2 transition-all duration-300 ${
-                  formData.estudia === false
-                    ? 'text-white border-[#410016] shadow-lg scale-105'
-                    : 'bg-white text-gray-700 border-gray-200 hover:border-[#410016] hover:scale-105'
-                }`}
-                style={formData.estudia === false ? { background: 'linear-gradient(135deg, #410016, #7a0028)' } : {}}
-              >
-                <svg className="w-6 h-6 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-                No estudio
-              </button>
-            </div>
-          </div>
-
-          {/* Pregunta 6: Discapacidad */}
-          <div className="group animate-fade-in-up animation-delay-600">
-            <div className="flex items-start gap-4 mb-4">
-              <div className="flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center text-white font-black text-xl shadow-lg"
-              style={{ background: 'linear-gradient(135deg, #410016, #7a0028)' }}>
-                6
-              </div>
-              <div className="flex-1">
-                <label className="block text-2xl font-bold text-gray-900 mb-2">
-                  ¿Tienes alguna discapacidad reconocida?
-                </label>
-                <p className="text-gray-500 text-sm">Hay programas especiales de apoyo para personas con discapacidad</p>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <button
-                type="button"
-                onClick={() => handleChange('tiene_discapacidad', true)}
-                className={`py-5 px-6 text-lg font-bold rounded-2xl border-2 transition-all duration-300 ${
-                  formData.tiene_discapacidad === true
-                    ? 'text-white border-[#410016] shadow-lg scale-105'
-                    : 'bg-white text-gray-700 border-gray-200 hover:border-[#410016] hover:scale-105'
-                }`}
-                style={formData.tiene_discapacidad === true ? { background: 'linear-gradient(135deg, #410016, #7a0028)' } : {}}
-              >
-                <svg className="w-6 h-6 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                Sí, tengo
-              </button>
-              <button
-                type="button"
-                onClick={() => handleChange('tiene_discapacidad', false)}
-                className={`py-5 px-6 text-lg font-bold rounded-2xl border-2 transition-all duration-300 ${
-                  formData.tiene_discapacidad === false
-                    ? 'text-white border-[#410016] shadow-lg scale-105'
-                    : 'bg-white text-gray-700 border-gray-200 hover:border-[#410016] hover:scale-105'
-                }`}
-                style={formData.tiene_discapacidad === false ? { background: 'linear-gradient(135deg, #410016, #7a0028)' } : {}}
-              >
-                <svg className="w-6 h-6 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-                No tengo
-              </button>
-            </div>
-          </div>
-
-          {/* Error */}
-          {error && (
-            <div className="bg-red-50 border-2 border-red-200 text-red-700 px-6 py-4 rounded-2xl flex items-start gap-3 animate-fade-in">
-              <svg className="w-6 h-6 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-              </svg>
-              <span className="font-semibold">{error}</span>
-            </div>
-          )}
-
-          {/* Botón Submit */}
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full text-white py-6 px-8 rounded-2xl text-xl font-black hover:shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-3"
-            style={{ background: loading ? '#9ca3af' : 'linear-gradient(135deg, #410016, #7a0028)' }}
-          >
-            {loading ? (
-              <>
-                <svg className="animate-spin h-6 w-6" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Procesando...
-              </>
-            ) : (
-              <>
-                Ver Mis Resultados
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                </svg>
-              </>
             )}
-          </button>
-        </form>
 
-        {/* Mensaje de privacidad */}
-        <div className="mt-8 bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-blue-100 rounded-2xl p-6 flex items-start gap-4">
-          <svg className="w-6 h-6 flex-shrink-0 mt-0.5" style={{ color: '#410016' }} fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-          </svg>
-          <div>
-            <p className="font-bold text-gray-900 mb-1">Tu información es privada y segura</p>
-            <p className="text-gray-600 text-sm">No guardamos tus datos personales. Esta información solo se usa para calcular tu elegibilidad.</p>
-          </div>
-        </div>
+            {error && (
+              <div className="bg-red-50 border-l-4 border-red-500 p-6 rounded-r-2xl animate-fade-in">
+                <div className="flex items-center">
+                  <svg className="w-6 h-6 text-red-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <p className="text-red-700 font-medium">{error}</p>
+                </div>
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-5 px-8 text-white font-black text-xl rounded-2xl shadow-2xl hover:shadow-3xl transform hover:scale-[1.02] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+              style={{ background: 'linear-gradient(135deg, #410016, #7a0028)' }}
+            >
+              {loading ? (
+                <>
+                  <svg className="inline w-6 h-6 mr-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                  </svg>
+                  Analizando tu perfil...
+                </>
+              ) : (
+                <>
+                  Ver programas compatibles
+                  <svg className="inline w-6 h-6 ml-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                  </svg>
+                </>
+              )}
+            </button>
+          </form>
         </div>
       </div>
+    </div>
+  )
+}
+
+function QuestionCard({ question, value, onChange }) {
+  return (
+    <div className="group animate-fade-in-up">
+      <div className="flex items-start gap-4 mb-4">
+        <div
+          className="flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center text-white font-black text-xl shadow-lg"
+          style={{ background: 'linear-gradient(135deg, #410016, #7a0028)' }}
+        >
+          {question.number}
+        </div>
+        <div className="flex-1">
+          <label className="block text-2xl font-bold text-gray-900 mb-2">
+            {question.label}
+          </label>
+          <p className="text-gray-500 text-sm">{question.help}</p>
+        </div>
+      </div>
+
+      {question.type === 'number' && (
+        <input
+          type="number"
+          min={question.min ?? 0}
+          value={value}
+          onChange={(e) => onChange(question.field, e.target.value)}
+          className="w-full px-6 py-4 text-lg border-2 border-gray-200 rounded-2xl focus:border-[#410016] focus:outline-none transition-all duration-300 hover:border-gray-300"
+          placeholder={question.placeholder}
+        />
+      )}
+
+      {question.type === 'choice' && (
+        <div className="grid gap-4 sm:grid-cols-2">
+          {question.options.map((option) => {
+            const active = value === option.value
+            return (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => onChange(question.field, option.value)}
+                className={`py-5 px-6 text-lg font-bold rounded-2xl border-2 transition-all duration-300 text-left ${
+                  active
+                    ? 'text-white border-[#410016] shadow-lg scale-[1.02]'
+                    : 'bg-white text-gray-700 border-gray-200 hover:border-[#410016]'
+                }`}
+                style={active ? { background: 'linear-gradient(135deg, #410016, #7a0028)' } : {}}
+              >
+                {option.label}
+              </button>
+            )
+          })}
+        </div>
+      )}
+
+      {question.type === 'boolean' && (
+        <div className="grid grid-cols-2 gap-4">
+          {[true, false].map((option) => {
+            const active = value === option
+            return (
+              <button
+                key={String(option)}
+                type="button"
+                onClick={() => onChange(question.field, option)}
+                className={`py-5 px-6 text-lg font-bold rounded-2xl border-2 transition-all duration-300 ${
+                  active
+                    ? 'text-white border-[#410016] shadow-lg scale-105'
+                    : 'bg-white text-gray-700 border-gray-200 hover:border-[#410016] hover:scale-105'
+                }`}
+                style={active ? { background: 'linear-gradient(135deg, #410016, #7a0028)' } : {}}
+              >
+                <svg className="w-6 h-6 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  {option ? (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  ) : (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  )}
+                </svg>
+                {formatBooleanLabel(option)}
+              </button>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }

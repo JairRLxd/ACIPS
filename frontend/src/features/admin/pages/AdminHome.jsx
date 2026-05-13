@@ -26,7 +26,7 @@ export default function AdminHome() {
     cargar()
   }, [])
 
-  const pendientes = solicitudes.filter((s) => s.estado === 'pendiente').length
+  const pendientes = solicitudes.filter((s) => s.estado === 'enviado').length
   const aprobadas = solicitudes.filter((s) => s.estado === 'aprobado').length
   const rechazadas = solicitudes.filter((s) => s.estado === 'rechazado').length
   const recientes = [...solicitudes]
@@ -216,10 +216,10 @@ function KpiCard({ label, value, icon, color, bg, border, badge }) {
 }
 
 const ESTADO_CONFIG = {
-  pendiente: { label: 'Pendiente', color: 'text-amber-700 bg-amber-100' },
-  aprobado: { label: 'Aprobado', color: 'text-emerald-700 bg-emerald-100' },
-  rechazado: { label: 'Rechazado', color: 'text-red-700 bg-red-100' },
-  constancia_emitida: { label: 'Constancia', color: 'text-blue-700 bg-blue-100' },
+  enviado: { label: 'Pendiente de revisar', color: 'text-amber-700 bg-amber-100' },
+  aprobado: { label: 'Aprobado sin constancia', color: 'text-emerald-700 bg-emerald-100' },
+  rechazado: { label: 'Expediente rechazado', color: 'text-red-700 bg-red-100' },
+  constancia_emitida: { label: 'Constancia emitida', color: 'text-blue-700 bg-blue-100' },
 }
 
 function SolicitudRow({ solicitud }) {

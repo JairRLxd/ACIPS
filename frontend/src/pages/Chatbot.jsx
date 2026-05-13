@@ -29,6 +29,7 @@ export default function Chatbot() {
   useEffect(() => {
     cargarConversacionActual()
     cargarListaConversaciones()
+    cargarPrefillSoporte()
   }, [])
 
   // Guardar conversación en localStorage cada vez que cambian los mensajes
@@ -107,6 +108,18 @@ export default function Chatbot() {
     } catch (err) {
       console.error('Error al cargar conversación:', err)
       setMensajes(getMensajeInicial())
+    }
+  }
+
+  const cargarPrefillSoporte = () => {
+    try {
+      const prefill = localStorage.getItem('acips_chat_prefill')
+      if (prefill) {
+        setInputMensaje(prefill)
+        localStorage.removeItem('acips_chat_prefill')
+      }
+    } catch (err) {
+      console.error('Error al cargar prefill del chat:', err)
     }
   }
 
@@ -453,7 +466,9 @@ export default function Chatbot() {
 
     try {
       const perfil = perfilUsuario
-        ? { edad: perfilUsuario.edad, municipio: perfilUsuario.municipio }
+        ? Object.fromEntries(
+            Object.entries(perfilUsuario).filter(([key]) => !key.startsWith('_'))
+          )
         : {}
 
       const response = await enviarMensajeChat(

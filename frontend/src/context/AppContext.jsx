@@ -12,7 +12,7 @@ export const useApp = () => {
 
 export const AppProvider = ({ children }) => {
   const [perfilUsuario, setPerfilUsuario] = useState(null)
-  const [resultados, setResultados] = useState([])
+  const [resultados, setResultados] = useState(null)
   const [modoAdultoMayor, setModoAdultoMayor] = useState(false)
 
   // Cargar modo adulto mayor de localStorage
