@@ -671,6 +671,29 @@ def extraer_texto_imagen(contenido_bytes):
         print(f"Error al extraer texto de imagen: {e}")
         return f"[Error al procesar imagen: {str(e)}]"
 
+@app.route('/api/v1/auth/me', methods=['GET', 'OPTIONS'])
+def auth_me():
+    """Endpoint para sincronizar usuario con el backend"""
+    if request.method == 'OPTIONS':
+        return jsonify({'status': 'ok'}), 200
+    
+    try:
+        # En una implementación completa, aquí verificarías el token de Firebase
+        # Por ahora, retornamos un usuario de ejemplo
+        return jsonify({
+            "success": True,
+            "user": {
+                "uid": "demo-user",
+                "email": "demo@acips.com",
+                "displayName": "Usuario Demo"
+            }
+        }), 200
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
 if __name__ == '__main__':
     print("=" * 60)
     print("  BACKEND ACIPS - CON GROQ AI + FIREBASE + WHISPER")
