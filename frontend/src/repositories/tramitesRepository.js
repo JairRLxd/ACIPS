@@ -3,15 +3,15 @@ import httpClient from '../infrastructure/httpClient'
 // --- Trámites (públicos) ---
 
 export const obtenerTramites = (params = {}) =>
-  httpClient.get('/tramites', { params })
+  httpClient.get('/api/v1/tramites', { params })
 
 export const obtenerTramite = (programaId) =>
-  httpClient.get(`/tramites/${programaId}`)
+  httpClient.get(`/api/v1/tramites/${programaId}`)
 
 // --- Validación de documentos ---
 
 export const validarDocumento = ({ sesionId, requisitoId, tipoEsperado, archivoBase64, mimeType }) =>
-  httpClient.post('/validar-documento', {
+  httpClient.post('/api/v1/validar-documento', {
     sesion_id: sesionId,
     requisito_id: requisitoId,
     tipo_esperado: tipoEsperado,
@@ -22,7 +22,7 @@ export const validarDocumento = ({ sesionId, requisitoId, tipoEsperado, archivoB
 // --- Trámites Virtuales ---
 
 export const crearTramiteVirtual = ({ programaId, perfilUsuario, documentos, evaluacionPrevia = {}, observacionesUsuario = null }) =>
-  httpClient.post('/tramites-virtuales', {
+  httpClient.post('/api/v1/tramites-virtuales', {
     programa_id: programaId,
     perfil_usuario: perfilUsuario,
     documentos,
@@ -31,7 +31,7 @@ export const crearTramiteVirtual = ({ programaId, perfilUsuario, documentos, eva
   })
 
 export const obtenerMisSolicitudes = () =>
-  httpClient.get('/tramites-virtuales/mis-solicitudes')
+  httpClient.get('/api/v1/tramites-virtuales/mis-solicitudes')
 
 // --- Generación de documentos (Grupo B) ---
 
@@ -48,11 +48,11 @@ export const obtenerTiposDocumento = () =>
 
 export const listarExpedientesAdmin = (estado = null) => {
   const params = estado ? { estado } : {}
-  return httpClient.get('/admin/tramites-virtuales', { params })
+  return httpClient.get('/api/v1/admin/tramites-virtuales', { params })
 }
 
 export const revisarExpediente = (expedienteId, decision, observacionesAdmin = '', constanciaUrl = null) =>
-  httpClient.post(`/admin/tramites-virtuales/${expedienteId}/revision`, {
+  httpClient.post(`/api/v1/admin/tramites-virtuales/${expedienteId}/revision`, {
     decision,
     observaciones_admin: observacionesAdmin,
     constancia_url: constanciaUrl,
