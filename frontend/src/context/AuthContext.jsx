@@ -25,28 +25,28 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
   const [backendUser, setBackendUser] = useState(null)
 
-  // Registrar usuario
   const register = async (email, password, displayName) => {
-    const user = await registerWithEmail(email, password, displayName)
-    // Sincronizar con backend
-    await syncWithBackend()
-    return user
+    const result = await registerWithEmail(email, password, displayName)
+    if (result.success) await syncWithBackend()
+    return result
   }
 
-  // Iniciar sesión
   const login = async (email, password) => {
-    const user = await loginWithEmail(email, password)
-    // Sincronizar con backend
-    await syncWithBackend()
-    return user
+    const result = await loginWithEmail(email, password)
+    if (result.success) {
+      const backendData = await syncWithBackend()
+      return { ...result, rol: backendData?.rol || 'ciudadano' }
+    }
+    return result
   }
 
-  // Iniciar sesión con Google
   const loginGoogle = async () => {
-    const user = await loginWithGoogle()
-    // Sincronizar con backend
-    await syncWithBackend()
-    return user
+    const result = await loginWithGoogle()
+    if (result.success) {
+      const backendData = await syncWithBackend()
+      return { ...result, rol: backendData?.rol || 'ciudadano' }
+    }
+    return result
   }
 
   // Cerrar sesión
@@ -60,16 +60,18 @@ export function AuthProvider({ children }) {
     return await resetPasswordService(email)
   }
 
-  // Sincronizar usuario con backend
+  // Sincronizar usuario con backend — retorna el usuario para que login pueda leer el rol
   const syncWithBackend = async () => {
     try {
       const response = await sincronizarUsuario()
       if (response.data) {
         setBackendUser(response.data)
+        return response.data
       }
     } catch (error) {
       console.error('Error al sincronizar con backend:', error)
     }
+    return null
   }
 
   useEffect(() => {

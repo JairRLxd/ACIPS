@@ -28,9 +28,9 @@ export default function Login() {
     setError(null)
 
     const result = await login(formData.email, formData.password)
-    
+
     if (result.success) {
-      navigate('/')
+      navigate(result.rol === 'admin' ? '/admin' : '/')
     } else {
       setError(result.error)
       setLoading(false)
@@ -40,11 +40,11 @@ export default function Login() {
   const handleGoogleLogin = async () => {
     setLoading(true)
     setError(null)
-    
+
     const result = await loginGoogle()
-    
+
     if (result.success) {
-      navigate('/')
+      navigate(result.rol === 'admin' ? '/admin' : '/')
     } else {
       setError(result.error)
       setLoading(false)

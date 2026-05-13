@@ -33,6 +33,17 @@ export const crearTramiteVirtual = ({ programaId, perfilUsuario, documentos, eva
 export const obtenerMisSolicitudes = () =>
   httpClient.get('/tramites-virtuales/mis-solicitudes')
 
+// --- Generación de documentos (Grupo B) ---
+
+export const generarDocumento = (tipoDocumento, datos) =>
+  httpClient.post('/documentos/generar', { tipo_documento: tipoDocumento, ...datos })
+
+export const descargarDocumento = (fileName) =>
+  httpClient.get(`/documentos/${fileName}`, { responseType: 'blob' })
+
+export const obtenerTiposDocumento = () =>
+  httpClient.get('/documentos/tipos')
+
 // --- Admin ---
 
 export const listarExpedientesAdmin = (estado = null) => {
