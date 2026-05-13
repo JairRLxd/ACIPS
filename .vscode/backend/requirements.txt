@@ -1,0 +1,11 @@
+flask==3.0.3
+flask-cors==4.0.1
+python-dotenv==1.0.1
+firebase-admin==6.5.0
+groq
+marshmallow==3.21.3
+easyocr==1.7.2
+numpy
+PyMuPDF
+Pillow>=11.0.0
+reportlab==4.2.2

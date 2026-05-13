@@ -29,8 +29,10 @@ dist/
 build/
 *.egg-info/
 
-# IDE
-.vscode/
+# IDE - Solo configuraciones de VSCode, NO el backend
+.vscode/settings.json
+.vscode/launch.json
+.vscode/extensions.json
 .idea/
 *.swp
 *.swo
@@ -54,3 +56,8 @@ coverage/
 *.tmp
 *.temp
 .cache/
+
+# Backend - archivos generados
+.vscode/backend/generated/
+.vscode/backend/venv/
+.vscode/backend/__pycache__/

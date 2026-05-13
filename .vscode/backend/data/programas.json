@@ -1,0 +1,122 @@
+[
+  {
+    "id": 1,
+    "nombre": "Pensión para el Bienestar de las Personas Adultas Mayores",
+    "descripcion": "Programa federal dirigido a personas adultas mayores de 65 anos en Mexico para apoyar su ingreso y bienestar.",
+    "monto": "$6,000 MXN",
+    "periodicidad": "bimestral",
+    "dependencia": "Secretaria de Bienestar",
+    "url_oficial": "https://www.gob.mx/bienestar",
+    "requisitos_elegibilidad": {
+      "edad_minima": 65,
+      "edad_maxima": null,
+      "tiene_hijos": null,
+      "nivel_ingreso": "sin restriccion",
+      "municipios_rurales": false
+    },
+    "documentos_requeridos": [
+      {
+        "id": 1,
+        "nombre": "INE",
+        "tipo": "identidad"
+      },
+      {
+        "id": 2,
+        "nombre": "CURP",
+        "tipo": "identidad"
+      },
+      {
+        "id": 3,
+        "nombre": "Comprobante de domicilio",
+        "tipo": "domicilio"
+      }
+    ],
+    "modalidad": "presencial",
+    "permite_envio_virtual": false,
+    "emite_constancia": false,
+    "tags": ["pension", "adultos mayores", "bienestar", "apoyo economico"],
+    "cobertura": "nacional",
+    "estados": [],
+    "situaciones": ["nuevo", "renovacion"]
+  },
+  {
+    "id": 2,
+    "nombre": "Beca Benito Juárez (nivel medio superior)",
+    "descripcion": "Apoyo economico para estudiantes inscritos en instituciones publicas de educacion media superior para reducir el abandono escolar.",
+    "monto": "$1,840 MXN",
+    "periodicidad": "bimestral",
+    "dependencia": "Coordinacion Nacional de Becas para el Bienestar Benito Juarez",
+    "url_oficial": "https://www.gob.mx/becasbenitojuarez",
+    "requisitos_elegibilidad": {
+      "edad_minima": null,
+      "edad_maxima": null,
+      "tiene_hijos": null,
+      "nivel_ingreso": "bajo",
+      "municipios_rurales": false
+    },
+    "documentos_requeridos": [
+      {
+        "id": 1,
+        "nombre": "INE o identificacion del tutor",
+        "tipo": "identidad"
+      },
+      {
+        "id": 2,
+        "nombre": "CURP del estudiante",
+        "tipo": "identidad"
+      },
+      {
+        "id": 3,
+        "nombre": "Constancia de estudios",
+        "tipo": "academico"
+      }
+    ],
+    "modalidad": "en_linea",
+    "permite_envio_virtual": true,
+    "emite_constancia": true,
+    "tags": ["beca", "estudiantes", "preparatoria", "educacion"],
+    "cobertura": "nacional",
+    "estados": [],
+    "situaciones": ["nuevo", "continuidad"]
+  },
+  {
+    "id": 3,
+    "nombre": "Sembrando Vida",
+    "descripcion": "Programa orientado a personas que habitan en localidades rurales y cuentan con unidades de produccion para impulsar cultivos y reforestacion con apoyo economico y acompanamiento tecnico.",
+    "monto": "$6,250 MXN",
+    "periodicidad": "mensual",
+    "dependencia": "Secretaria de Bienestar",
+    "url_oficial": "https://www.gob.mx/bienestar/acciones-y-programas/sembrando-vida",
+    "requisitos_elegibilidad": {
+      "edad_minima": 18,
+      "edad_maxima": null,
+      "tiene_hijos": null,
+      "nivel_ingreso": "bajo",
+      "municipios_rurales": true
+    },
+    "documentos_requeridos": [
+      {
+        "id": 1,
+        "nombre": "INE",
+        "tipo": "identidad"
+      },
+      {
+        "id": 2,
+        "nombre": "CURP",
+        "tipo": "identidad"
+      },
+      {
+        "id": 3,
+        "nombre": "Documento que acredite posesion o propiedad de la tierra",
+        "tipo": "propiedad"
+      }
+    ],
+    "modalidad": "mixto",
+    "permite_envio_virtual": true,
+    "emite_constancia": false,
+    "tags": ["campo", "rural", "agricultura", "reforestacion"],
+    "cobertura": "nacional",
+    "estados": [],
+    "situaciones": ["nuevo", "productivo"]
+  }
+]
