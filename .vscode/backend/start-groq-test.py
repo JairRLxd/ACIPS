@@ -53,139 +53,116 @@ def health():
 
 @app.route('/api/v1/tramites', methods=['GET'])
 def tramites():
-    programas = [
-        {
-            "id": 1,
-            "nombre": "Pensión para el Bienestar de las Personas Adultas Mayores",
-            "descripcion": "Programa federal dirigido a personas adultas mayores de 65 años",
-            "monto": "$6,000 MXN",
-            "periodicidad": "bimestral"
-        },
-        {
-            "id": 2,
-            "nombre": "Beca Benito Juárez",
-            "descripcion": "Apoyo económico para estudiantes de nivel medio superior",
-            "monto": "$1,840 MXN",
-            "periodicidad": "bimestral"
-        },
-        {
-            "id": 3,
-            "nombre": "Sembrando Vida",
-            "descripcion": "Programa para agricultores en zonas rurales",
-            "monto": "$6,250 MXN",
-            "periodicidad": "mensual"
-        }
-    ]
-    return jsonify({"programas": programas}), 200
+    """Obtener lista de todos los programas desde programas.json"""
+    try:
+        import json
+        
+        # Leer el archivo programas.json
+        programas_path = os.path.join(os.path.dirname(__file__), 'data', 'programas.json')
+        
+        with open(programas_path, 'r', encoding='utf-8') as f:
+            programas = json.load(f)
+        
+        # Simplificar la información para la lista
+        programas_lista = [
+            {
+                "id": p['id'],
+                "nombre": p['nombre'],
+                "descripcion": p['descripcion'],
+                "monto": p['monto'],
+                "periodicidad": p['periodicidad'],
+                "dependencia": p.get('dependencia', ''),
+                "tags": p.get('tags', [])
+            }
+            for p in programas
+        ]
+        
+        return jsonify({"programas": programas_lista}), 200
+        
+    except FileNotFoundError:
+        return jsonify({
+            "error": "Archivo de programas no encontrado",
+            "programas": []
+        }), 500
+    except Exception as e:
+        print(f"❌ Error al obtener trámites: {str(e)}")
+        return jsonify({
+            "error": str(e),
+            "programas": []
+        }), 500
 
 @app.route('/api/v1/tramites/<int:programa_id>', methods=['GET'])
 def obtener_tramite(programa_id):
-    """Obtener detalles completos de un programa específico"""
-    
-    # Base de datos de programas con información completa
-    programas_detalle = {
-        1: {
-            "id": 1,
-            "nombre": "Pensión para el Bienestar de las Personas Adultas Mayores",
-            "descripcion": "Programa federal dirigido a personas adultas mayores de 65 años que no reciben pensión contributiva superior a $1,092 pesos mensuales.",
-            "monto": "$6,000 MXN",
-            "periodicidad": "bimestral",
-            "telefono_informes": "800-639-4264",
-            "oficina_tramite": "Oficinas de Bienestar en tu municipio",
-            "documentos": [
-                "Identificación oficial vigente (INE/IFE)",
-                "CURP",
-                "Comprobante de domicilio (no mayor a 3 meses)",
-                "Acta de nacimiento",
-                "Estado de cuenta bancario o CLABE interbancaria"
+    """Obtener detalles completos de un programa específico desde programas.json"""
+    try:
+        import json
+        
+        # Leer el archivo programas.json
+        programas_path = os.path.join(os.path.dirname(__file__), 'data', 'programas.json')
+        
+        with open(programas_path, 'r', encoding='utf-8') as f:
+            programas = json.load(f)
+        
+        # Buscar el programa por ID
+        programa = next((p for p in programas if p['id'] == programa_id), None)
+        
+        if not programa:
+            return jsonify({
+                "success": False,
+                "error": "Programa no encontrado"
+            }), 404
+        
+        # Extraer nombres de documentos para el checklist
+        documentos_nombres = [doc['nombre'] for doc in programa.get('documentos_requeridos', [])]
+        
+        # Extraer pasos del trámite
+        pasos = programa.get('pasos_tramite', [])
+        
+        # Crear checklist de documentos
+        checklist = {
+            "requeridos": [
+                {"nombre": doc, "estado": "FALTA"} 
+                for doc in documentos_nombres
             ],
-            "pasos": [
-                "Acude a la oficina de Bienestar más cercana con tus documentos",
-                "Llena el formato de registro que te proporcionarán",
-                "Entrega tus documentos originales y copias",
-                "Espera la validación de tu información (2-4 semanas)",
-                "Recibirás una tarjeta bancaria donde se depositará tu apoyo",
-                "El primer pago llegará en el siguiente bimestre"
-            ]
-        },
-        2: {
-            "id": 2,
-            "nombre": "Beca Benito Juárez",
-            "descripcion": "Apoyo económico para estudiantes de educación media superior (preparatoria, bachillerato, profesional técnico) de escuelas públicas.",
-            "monto": "$1,840 MXN",
-            "periodicidad": "bimestral",
-            "telefono_informes": "800-624-9996",
-            "oficina_tramite": "Coordinación Nacional de Becas para el Bienestar Benito Juárez",
-            "documentos": [
-                "CURP del estudiante",
-                "Comprobante de inscripción o constancia escolar",
-                "Identificación oficial del padre/madre/tutor",
-                "Comprobante de domicilio",
-                "Formato de registro (se descarga en línea)"
-            ],
-            "pasos": [
-                "Ingresa al portal oficial: becasbenitojuarez.gob.mx",
-                "Registra tus datos personales y escolares",
-                "Sube los documentos digitalizados (PDF o imagen)",
-                "Imprime tu comprobante de registro",
-                "Espera la validación (4-6 semanas)",
-                "Recibirás notificación por correo electrónico",
-                "El apoyo se deposita en tarjeta bancaria"
-            ]
-        },
-        3: {
-            "id": 3,
-            "nombre": "Sembrando Vida",
-            "descripcion": "Programa para pequeños productores rurales que siembran árboles frutales y maderables en sus parcelas.",
-            "monto": "$6,250 MXN",
-            "periodicidad": "mensual",
-            "telefono_informes": "800-900-2000",
-            "oficina_tramite": "Oficinas de Sembrando Vida en tu región",
-            "documentos": [
-                "Identificación oficial vigente",
-                "CURP",
-                "Comprobante de domicilio",
-                "Documentos que acrediten la propiedad o posesión de la tierra",
-                "Croquis de ubicación de la parcela",
-                "Formato de inscripción"
-            ],
-            "pasos": [
-                "Verifica que tu comunidad esté en la zona de atención del programa",
-                "Acude a la oficina regional de Sembrando Vida",
-                "Presenta tus documentos y el croquis de tu parcela",
-                "Recibe capacitación sobre el programa y técnicas de siembra",
-                "Firma el convenio de participación",
-                "Inicia la siembra de árboles en tu parcela",
-                "Recibe el apoyo mensual durante 5 años"
-            ]
+            "porcentaje": 0
         }
-    }
-    
-    # Buscar el programa
-    programa = programas_detalle.get(programa_id)
-    
-    if not programa:
+        
+        # Preparar respuesta con toda la información
+        programa_detalle = {
+            "id": programa['id'],
+            "nombre": programa['nombre'],
+            "descripcion": programa['descripcion'],
+            "monto": programa['monto'],
+            "periodicidad": programa['periodicidad'],
+            "telefono_informes": programa.get('telefono_informes', 'No disponible'),
+            "oficina_tramite": programa.get('oficina_tramite', 'Consultar en oficinas locales'),
+            "dependencia": programa.get('dependencia', ''),
+            "url_oficial": programa.get('url_oficial', ''),
+            "documentos": documentos_nombres,
+            "pasos": pasos,
+            "modalidad": programa.get('modalidad', 'presencial'),
+            "tags": programa.get('tags', [])
+        }
+        
+        return jsonify({
+            "success": True,
+            "programa": programa_detalle,
+            "documentos": documentos_nombres,
+            "pasos": pasos,
+            "checklist": checklist
+        }), 200
+        
+    except FileNotFoundError:
         return jsonify({
             "success": False,
-            "error": "Programa no encontrado"
-        }), 404
-    
-    # Crear checklist de documentos
-    checklist = {
-        "requeridos": [
-            {"nombre": doc, "estado": "FALTA"} 
-            for doc in programa["documentos"]
-        ],
-        "porcentaje": 0
-    }
-    
-    return jsonify({
-        "success": True,
-        "programa": programa,
-        "documentos": programa["documentos"],
-        "pasos": programa["pasos"],
-        "checklist": checklist
-    }), 200
+            "error": "Archivo de programas no encontrado"
+        }), 500
+    except Exception as e:
+        print(f"❌ Error al obtener trámite: {str(e)}")
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
 
 @app.route('/api/v1/tramites/<int:programa_id>/documento', methods=['POST'])
 def actualizar_documento(programa_id):
