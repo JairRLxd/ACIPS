@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useApp } from '../context/AppContext'
 import { useAuth } from '../context/AuthContext'
-import { enviarMensajeChat, limpiarChat } from '../api/client'
+import { enviarMensajeChat } from '../repositories/chatRepository'
 
 export default function Chatbot() {
   const { perfilUsuario } = useApp()
@@ -11,7 +11,7 @@ export default function Chatbot() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [archivosAdjuntos, setArchivosAdjuntos] = useState([])
-  const [sesionId, setSesionId] = useState(null) // Guardar sesión
+  const [sesionId, setSesionId] = useState(() => crypto.randomUUID())
   const [isRecording, setIsRecording] = useState(false) // Estado de grabación
   const [isSpeaking, setIsSpeaking] = useState(false) // Estado de reproducción de voz
   const [useOfflineRecording, setUseOfflineRecording] = useState(false) // Usar grabación offline
@@ -213,7 +213,7 @@ export default function Chatbot() {
   // Función para crear nueva conversación
   const nuevaConversacion = () => {
     setMensajes(getMensajeInicial())
-    setSesionId(null)
+    setSesionId(crypto.randomUUID())
     setShowHistory(false)
     localStorage.removeItem('acips_conversacion_actual')
   }
@@ -452,111 +452,36 @@ export default function Chatbot() {
     setLoading(true)
 
     try {
-      let response;
-      const userId = currentUser?.uid || null // Obtener ID del usuario autenticado
-      
-      // Si hay archivos, enviar como FormData
-      if (archivosAdjuntos.length > 0) {
-        const formData = new FormData()
-        formData.append('mensaje', mensaje || 'Analiza estos documentos y dame recomendaciones')
-        
-        // Agregar sesión si existe
-        if (sesionId) {
-          formData.append('sesion_id', sesionId)
-        }
-        
-        // Agregar user_id si está autenticado
-        if (userId) {
-          formData.append('user_id', userId)
-        }
-        
-        // Agregar archivos
-        archivosAdjuntos.forEach((archivo) => {
-          formData.append('archivos', archivo)
-        })
-        
-        // Enviar con FormData
-        response = await fetch('http://localhost:5000/api/v1/chat', {
-          method: 'POST',
-          body: formData,
-        })
-        
-        const data = await response.json()
-        
-        if (response.ok) {
-          // Guardar sesión ID
-          if (data.sesion_id) {
-            setSesionId(data.sesion_id)
-          }
-          
-          const nuevoMensajeAsistente = {
-            role: 'assistant',
-            content: data.respuesta || data.mensaje || 'Sin respuesta',
-            guardado: data.guardado_en_firebase,
-            timestamp: new Date().toLocaleTimeString('es-MX', {
-              hour: '2-digit',
-              minute: '2-digit',
-            }),
-          }
-          setMensajes((prev) => [...prev, nuevoMensajeAsistente])
-        } else {
-          setError(data.error || 'Error al enviar mensaje')
-        }
-      } else {
-        // Sin archivos, enviar JSON normal con sesión y user_id
-        const payload = { mensaje }
-        if (sesionId) {
-          payload.sesion_id = sesionId
-        }
-        if (userId) {
-          payload.user_id = userId
-        }
-        
-        response = await fetch('http://localhost:5000/api/v1/chat', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(payload),
-        })
+      const perfil = perfilUsuario
+        ? { edad: perfilUsuario.edad, municipio: perfilUsuario.municipio }
+        : {}
 
-        const data = await response.json()
+      const response = await enviarMensajeChat(
+        mensaje || 'Analiza y dame recomendaciones',
+        sesionId,
+        perfil
+      )
 
-        if (response.ok) {
-          // Guardar sesión ID
-          if (data.sesion_id) {
-            setSesionId(data.sesion_id)
-          }
-          
-          const nuevoMensajeAsistente = {
-            role: 'assistant',
-            content: data.respuesta || data.mensaje || 'Sin respuesta',
-            guardado: data.guardado_en_firebase,
-            timestamp: new Date().toLocaleTimeString('es-MX', {
-              hour: '2-digit',
-              minute: '2-digit',
-            }),
-          }
-          setMensajes((prev) => [...prev, nuevoMensajeAsistente])
-        } else {
-          setError(data.error || 'Error al enviar mensaje')
-        }
-      }
-    } catch (err) {
-      console.error('Error:', err)
-      const errorMsg = err.response?.data?.error || 'Error de conexión. Verifica que el backend esté corriendo.'
-      setError(errorMsg)
-      
-      // Agregar mensaje de error
+      const data = response.data
       setMensajes((prev) => [
         ...prev,
         {
           role: 'assistant',
-          content: `Lo siento, hubo un error: ${errorMsg}. Por favor verifica que el servidor backend esté corriendo en http://localhost:5000`,
-          timestamp: new Date().toLocaleTimeString('es-MX', {
-            hour: '2-digit',
-            minute: '2-digit',
-          }),
+          content: data.respuesta || 'Sin respuesta',
+          programas: data.programas_relacionados || [],
+          timestamp: new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }),
+        },
+      ])
+    } catch (err) {
+      console.error('Error chat:', err)
+      const errorMsg = err.response?.data?.error || 'Error de conexión con el servidor.'
+      setError(errorMsg)
+      setMensajes((prev) => [
+        ...prev,
+        {
+          role: 'assistant',
+          content: `Lo siento, hubo un error: ${errorMsg}`,
+          timestamp: new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }),
         },
       ])
     } finally {

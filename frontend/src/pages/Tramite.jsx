@@ -1,236 +1,198 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { obtenerTramite, actualizarDocumento } from '../api/client'
+import { obtenerTramite } from '../repositories/tramitesRepository'
 
 export default function Tramite() {
   const { id } = useParams()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [programa, setPrograma] = useState(null)
-  const [documentos, setDocumentos] = useState([])
-  const [pasos, setPasos] = useState([])
-  const [checklist, setChecklist] = useState(null)
+  const [tramite, setTramite] = useState(null)
+  const [checklist, setChecklist] = useState({})
 
   useEffect(() => {
-    cargarTramite()
+    const cargar = async () => {
+      try {
+        setLoading(true)
+        const response = await obtenerTramite(id)
+        const data = response.data
+        setTramite(data)
+        // Inicializar checklist local con los documentos requeridos
+        const inicial = {}
+        data.documentos_requeridos?.forEach((doc) => {
+          inicial[doc.id] = false
+        })
+        setChecklist(inicial)
+      } catch {
+        setError('No se pudo cargar el trámite')
+      } finally {
+        setLoading(false)
+      }
+    }
+    cargar()
   }, [id])
 
-  const cargarTramite = async () => {
-    try {
-      setLoading(true)
-      const response = await obtenerTramite(id)
+  const toggleDoc = (docId) =>
+    setChecklist((prev) => ({ ...prev, [docId]: !prev[docId] }))
 
-      if (response.data.success) {
-        setPrograma(response.data.programa)
-        setDocumentos(response.data.documentos)
-        setPasos(response.data.pasos)
-        setChecklist(response.data.checklist)
-      } else {
-        setError(response.data.error || 'Error al cargar trámite')
-      }
-    } catch (err) {
-      console.error('Error:', err)
-      setError('Error de conexión')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleToggleDocumento = async (documento) => {
-    const estadoActual = checklist.requeridos.find((d) => d.nombre === documento)?.estado
-    const nuevoEstado = estadoActual === 'OK' ? 'FALTA' : 'OK'
-
-    try {
-      const response = await actualizarDocumento(id, documento, nuevoEstado)
-
-      if (response.data.success) {
-        // Actualizar checklist localmente
-        const nuevosRequeridos = checklist.requeridos.map((d) =>
-          d.nombre === documento ? { ...d, estado: nuevoEstado } : d
-        )
-
-        setChecklist({
-          ...checklist,
-          requeridos: nuevosRequeridos,
-          porcentaje: response.data.porcentaje,
-        })
-      }
-    } catch (err) {
-      console.error('Error al actualizar documento:', err)
-    }
-  }
+  const completados = Object.values(checklist).filter(Boolean).length
+  const total = tramite?.documentos_requeridos?.length || 0
+  const porcentaje = total > 0 ? Math.round((completados / total) * 100) : 0
 
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-12 text-center">
-        <div className="text-4xl mb-4">⏳</div>
         <p className="text-xl text-gray-700">Cargando información del trámite...</p>
       </div>
     )
   }
 
-  if (error || !programa) {
+  if (error || !tramite) {
     return (
       <div className="container mx-auto px-4 py-12 text-center">
-        <div className="text-4xl mb-4">❌</div>
         <p className="text-xl text-red-600 mb-4">{error || 'Programa no encontrado'}</p>
-        <Link to="/resultados" className="text-blue-600 hover:underline">
-          ← Volver a resultados
+        <Link to="/" className="text-blue-600 hover:underline">
+          ← Volver al inicio
         </Link>
       </div>
     )
   }
 
   return (
-    <div className="container mx-auto px-4 py-12 max-w-6xl">
+    <div className="container mx-auto px-4 py-12 max-w-4xl">
       {/* Breadcrumb */}
-      <nav className="mb-6 text-gray-600">
+      <nav className="mb-6 text-gray-600 text-sm">
         <Link to="/" className="hover:text-blue-600">Inicio</Link>
         <span className="mx-2">›</span>
-        <Link to="/resultados" className="hover:text-blue-600">Resultados</Link>
-        <span className="mx-2">›</span>
-        <span className="text-gray-800">Guía de Trámite</span>
+        <span className="text-gray-800">{tramite.nombre}</span>
       </nav>
 
       {/* Encabezado */}
-      <div className="mb-8 fade-in">
-        <h1 className="text-4xl font-bold text-blue-600 mb-4">
-          📄 {programa.nombre}
-        </h1>
-        <p className="text-xl text-gray-700">{programa.descripcion}</p>
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">{tramite.nombre}</h1>
+        <p className="text-gray-600">{tramite.descripcion}</p>
       </div>
 
       {/* Info del programa */}
-      <div className="grid md:grid-cols-2 gap-6 mb-8">
-        <div className="bg-green-100 border-2 border-green-400 rounded-xl p-6 text-center">
-          <h3 className="text-2xl font-bold text-green-800 mb-2">💰 Monto</h3>
-          <p className="text-3xl font-bold text-green-600">{programa.monto}</p>
-          <p className="text-gray-700">{programa.periodicidad}</p>
+      <div className="grid sm:grid-cols-3 gap-4 mb-8">
+        <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-center">
+          <p className="text-sm text-gray-500 mb-1">Monto</p>
+          <p className="text-2xl font-bold text-green-700">{tramite.monto}</p>
+          <p className="text-sm text-gray-500">{tramite.periodicidad}</p>
         </div>
-        <div className="bg-blue-100 border-2 border-blue-400 rounded-xl p-6">
-          <h3 className="text-2xl font-bold text-blue-800 mb-3">📞 Información</h3>
-          <p className="text-gray-700 mb-2">
-            <span className="font-semibold">Teléfono:</span> {programa.telefono_informes}
-          </p>
-          <p className="text-gray-700">
-            <span className="font-semibold">Oficina:</span> {programa.oficina_tramite}
-          </p>
+        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-center">
+          <p className="text-sm text-gray-500 mb-1">Dependencia</p>
+          <p className="font-semibold text-blue-800 text-sm">{tramite.dependencia}</p>
+        </div>
+        <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 text-center">
+          <p className="text-sm text-gray-500 mb-1">Modalidad</p>
+          <p className="font-semibold text-purple-800 capitalize">{tramite.modalidad}</p>
+          {tramite.url_oficial && (
+            <a href={tramite.url_oficial} target="_blank" rel="noopener noreferrer"
+              className="text-xs text-purple-600 hover:underline">
+              Sitio oficial →
+            </a>
+          )}
         </div>
       </div>
 
       {/* Checklist de documentos */}
-      {checklist && (
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-8 fade-in">
-          <h2 className="text-3xl font-bold text-gray-800 mb-6">
-            ✅ Checklist de Documentos
-          </h2>
+      {tramite.documentos_requeridos?.length > 0 && (
+        <div className="bg-white rounded-xl shadow p-6 mb-8">
+          <h2 className="text-xl font-bold text-gray-800 mb-4">Documentos requeridos</h2>
 
           {/* Barra de progreso */}
-          <div className="mb-6">
-            <div className="flex justify-between mb-2">
-              <span className="font-semibold text-gray-700">Progreso:</span>
-              <span className="font-bold text-gray-800">{checklist.porcentaje}%</span>
+          <div className="mb-4">
+            <div className="flex justify-between text-sm mb-1">
+              <span className="text-gray-600">{completados} de {total} listos</span>
+              <span className="font-bold text-gray-800">{porcentaje}%</span>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-8 overflow-hidden">
+            <div className="w-full bg-gray-100 rounded-full h-3">
               <div
-                className="h-full bg-green-500 transition-all duration-500 flex items-center justify-center text-white font-semibold"
-                style={{ width: `${checklist.porcentaje}%` }}
-              >
-                {checklist.porcentaje}%
-              </div>
+                className="h-3 bg-green-500 rounded-full transition-all duration-500"
+                style={{ width: `${porcentaje}%` }}
+              />
             </div>
           </div>
 
-          {/* Lista de documentos */}
-          <div className="space-y-3">
-            {checklist.requeridos.map((doc, index) => (
-              <div
-                key={index}
-                className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border-2 border-gray-200 hover:border-blue-300 transition-all"
+          <div className="space-y-2">
+            {tramite.documentos_requeridos.map((doc) => (
+              <button
+                key={doc.id}
+                onClick={() => toggleDoc(doc.id)}
+                className={`w-full flex items-center gap-3 p-3 rounded-lg border-2 transition-all text-left ${
+                  checklist[doc.id]
+                    ? 'border-green-400 bg-green-50'
+                    : 'border-gray-200 bg-gray-50 hover:border-blue-300'
+                }`}
               >
-                <span className="text-lg text-gray-800">{doc.nombre}</span>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => handleToggleDocumento(doc.nombre)}
-                    className={`px-4 py-2 rounded-lg font-semibold transition-all ${
-                      doc.estado === 'OK'
-                        ? 'bg-green-500 text-white'
-                        : 'bg-gray-200 text-gray-700 hover:bg-green-100'
-                    }`}
-                  >
-                    {doc.estado === 'OK' ? '✅ Tengo' : '⬜ Marcar'}
-                  </button>
+                <span className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                  checklist[doc.id] ? 'bg-green-500 border-green-500 text-white' : 'border-gray-300'
+                }`}>
+                  {checklist[doc.id] && '✓'}
+                </span>
+                <div>
+                  <p className="font-medium text-gray-800">{doc.nombre}</p>
+                  <p className="text-xs text-gray-500 capitalize">{doc.tipo}</p>
                 </div>
-              </div>
+              </button>
             ))}
-          </div>
-
-          <div className="mt-4 bg-blue-50 border-2 border-blue-200 rounded-lg p-4">
-            <p className="text-gray-700">
-              <span className="font-semibold">💡 Tip:</span> Marca los documentos que ya tienes para llevar control de tu progreso.
-            </p>
           </div>
         </div>
       )}
 
-      {/* Pasos del trámite */}
-      <div className="bg-white rounded-xl shadow-lg p-6 mb-8 fade-in">
-        <h2 className="text-3xl font-bold text-gray-800 mb-6">
-          🚶 Pasos para Tramitar
-        </h2>
-        <p className="text-lg text-gray-700 mb-6">
-          Sigue estos pasos en orden para completar tu trámite:
-        </p>
-
-        <div className="space-y-4">
-          {pasos.map((paso, index) => (
-            <div key={index} className="flex gap-4 p-4 bg-gray-50 rounded-lg border-l-4 border-blue-600">
-              <div className="flex-shrink-0">
-                <div className="w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-lg">
-                  {index + 1}
-                </div>
+      {/* Requisitos */}
+      {tramite.requisitos && (
+        <div className="bg-white rounded-xl shadow p-6 mb-8">
+          <h2 className="text-xl font-bold text-gray-800 mb-4">Requisitos de elegibilidad</h2>
+          <div className="grid sm:grid-cols-2 gap-3 text-sm">
+            {tramite.requisitos.edad_minima && (
+              <div className="flex gap-2 text-gray-700">
+                <span className="font-semibold">Edad mínima:</span>
+                <span>{tramite.requisitos.edad_minima} años</span>
               </div>
-              <div className="flex-1">
-                <p className="text-lg text-gray-800">{paso}</p>
+            )}
+            {tramite.requisitos.edad_maxima && (
+              <div className="flex gap-2 text-gray-700">
+                <span className="font-semibold">Edad máxima:</span>
+                <span>{tramite.requisitos.edad_maxima} años</span>
               </div>
-            </div>
-          ))}
+            )}
+            {tramite.requisitos.nivel_ingreso && (
+              <div className="flex gap-2 text-gray-700">
+                <span className="font-semibold">Nivel de ingreso:</span>
+                <span className="capitalize">{tramite.requisitos.nivel_ingreso}</span>
+              </div>
+            )}
+            {tramite.requisitos.municipios_rurales && (
+              <div className="flex gap-2 text-gray-700">
+                <span className="font-semibold">Zona:</span>
+                <span>Municipios rurales</span>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Consejos */}
-      <div className="bg-yellow-50 border-2 border-yellow-300 rounded-xl p-6 mb-8">
-        <h3 className="text-2xl font-bold text-yellow-800 mb-4">
-          💡 Consejos Importantes
-        </h3>
-        <ul className="space-y-2 text-gray-700">
-          <li>• Lleva copias y originales de todos tus documentos</li>
-          <li>• Verifica que tu INE esté vigente</li>
-          <li>• El comprobante de domicilio debe ser reciente (máximo 3 meses)</li>
-          <li>• Si tienes dudas, llama al teléfono de informes antes de ir</li>
-          <li>• Llega temprano a la oficina para evitar filas largas</li>
-        </ul>
-      </div>
-
-      {/* Botones de acción */}
-      <div className="grid md:grid-cols-3 gap-4">
+      {/* Acciones */}
+      <div className="flex flex-col sm:flex-row gap-3">
         <Link
-          to="/resultados"
-          className="bg-gray-200 text-gray-800 px-6 py-3 rounded-lg text-center font-semibold hover:bg-gray-300 transition-all"
+          to="/"
+          className="flex-1 bg-gray-100 text-gray-800 px-6 py-3 rounded-xl text-center font-semibold hover:bg-gray-200 transition-all"
         >
-          ← Volver a Resultados
+          ← Volver al inicio
         </Link>
         <Link
           to="/chat"
-          className="bg-blue-600 text-white px-6 py-3 rounded-lg text-center font-semibold hover:bg-blue-700 transition-all"
+          className="flex-1 text-white px-6 py-3 rounded-xl text-center font-semibold transition-all"
+          style={{ background: 'linear-gradient(to right, #410016, #5a0020)' }}
         >
-          💬 Preguntar al Asistente
+          Preguntar al asistente
         </Link>
         <button
           onClick={() => window.print()}
-          className="bg-green-600 text-white px-6 py-3 rounded-lg text-center font-semibold hover:bg-green-700 transition-all"
+          className="flex-1 bg-gray-800 text-white px-6 py-3 rounded-xl font-semibold hover:bg-gray-900 transition-all"
         >
-          🖨️ Imprimir Guía
+          Imprimir guía
         </button>
       </div>
     </div>

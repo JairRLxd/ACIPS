@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
-import { enviarDiagnostico } from '../api/client'
+import { enviarDiagnostico } from '../repositories/chatRepository'
 
 export default function Diagnostico() {
   const navigate = useNavigate()

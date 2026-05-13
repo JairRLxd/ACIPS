@@ -1,8 +1,6 @@
 import { initializeApp } from 'firebase/app'
 import { getAuth, GoogleAuthProvider } from 'firebase/auth'
-import { getAnalytics } from 'firebase/analytics'
 
-// Configuración de Firebase
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
@@ -10,20 +8,26 @@ const firebaseConfig = {
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 }
 
-// Inicializar Firebase
-const app = initializeApp(firebaseConfig)
+const isConfigured = Boolean(firebaseConfig.apiKey && firebaseConfig.projectId)
 
-// Inicializar servicios
-export const auth = getAuth(app)
-export const analytics = typeof window !== 'undefined' ? getAnalytics(app) : null
-export const googleProvider = new GoogleAuthProvider()
+let app = null
+let auth = null
+let googleProvider = null
 
-// Configurar proveedor de Google
-googleProvider.setCustomParameters({
-  prompt: 'select_account'
-})
+if (isConfigured) {
+  try {
+    app = initializeApp(firebaseConfig)
+    auth = getAuth(app)
+    googleProvider = new GoogleAuthProvider()
+    googleProvider.setCustomParameters({ prompt: 'select_account' })
+  } catch {
+    auth = null
+    googleProvider = null
+  }
+}
 
+export { auth, googleProvider }
 export default app

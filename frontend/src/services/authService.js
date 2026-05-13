@@ -8,8 +8,11 @@ import {
 } from 'firebase/auth'
 import { auth, googleProvider } from '../config/firebase'
 
+const firebaseNotConfigured = { success: false, error: 'Firebase no configurado. Agrega tus credenciales en el archivo .env' }
+
 // Registro con email y contraseña
 export const registerWithEmail = async (email, password, displayName) => {
+  if (!auth) return firebaseNotConfigured
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password)
     
@@ -34,6 +37,7 @@ export const registerWithEmail = async (email, password, displayName) => {
 
 // Login con email y contraseña
 export const loginWithEmail = async (email, password) => {
+  if (!auth) return firebaseNotConfigured
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password)
     return {
@@ -50,6 +54,7 @@ export const loginWithEmail = async (email, password) => {
 
 // Login con Google
 export const loginWithGoogle = async () => {
+  if (!auth || !googleProvider) return firebaseNotConfigured
   try {
     const result = await signInWithPopup(auth, googleProvider)
     return {
@@ -66,6 +71,7 @@ export const loginWithGoogle = async () => {
 
 // Cerrar sesión
 export const logout = async () => {
+  if (!auth) return { success: true }
   try {
     await signOut(auth)
     return {
@@ -81,6 +87,7 @@ export const logout = async () => {
 
 // Recuperar contraseña
 export const resetPassword = async (email) => {
+  if (!auth) return firebaseNotConfigured
   try {
     await sendPasswordResetEmail(auth, email)
     return {

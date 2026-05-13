@@ -8,7 +8,7 @@ import {
   logout as logoutService,
   resetPassword as resetPasswordService
 } from '../services/authService'
-import { sincronizarUsuario } from '../api/client'
+import { sincronizarUsuario } from '../repositories/userRepository'
 
 const AuthContext = createContext()
 
@@ -72,23 +72,27 @@ export function AuthProvider({ children }) {
     }
   }
 
-  // Escuchar cambios en el estado de autenticación
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setCurrentUser(user)
-      
-      if (user) {
-        // Usuario autenticado, sincronizar con backend
-        await syncWithBackend()
-      } else {
-        // Usuario no autenticado
-        setBackendUser(null)
-      }
-      
+    if (!auth) {
       setLoading(false)
-    })
+      return
+    }
 
-    return unsubscribe
+    const unsubscribe = onAuthStateChanged(
+      auth,
+      async (user) => {
+        setCurrentUser(user)
+        if (user) {
+          await syncWithBackend()
+        } else {
+          setBackendUser(null)
+        }
+        setLoading(false)
+      },
+      () => setLoading(false)
+    )
+
+    return () => unsubscribe()
   }, [])
 
   const value = {
